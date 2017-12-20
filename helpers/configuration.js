@@ -8,8 +8,8 @@ let constants = require('../constants.json');
 //let Logger = require('../logger.js');
 //let logger = new Logger({ echo: appConfig.consoleLogLevel, errorLevel: appConfig.fileLogLevel, filename: appConfig.logFileName });
 
-function getConfiguration (name) {
-  http.get('http://54.238.160.138:3000/sidechain/get?name='+name, (response) => {
+function getConfiguration (name, cb) {
+  http.get('http://54.238.250.48:3000/sidechain/get?name='+name, (response) => {
     var data = '';
     response.on('data', function (chunk) {
       data += chunk;
@@ -17,18 +17,18 @@ function getConfiguration (name) {
     response.on('end', function () {
       data = JSON.parse(data);
       if(data.status === 'success') {
-        updateConfiguration(data.data);
+        updateConfiguration(data.data, cb);
       }
       else {
-        console.log('Failed to get configurations for ',name);
+        cb('Failed to get configurations for '+name);
       }
     });
   }).on("error", (err) => {
-    console.log('Failed to get configurations from server: ',err);
+    cb('Failed to get sidechain configurations from server '+err);
   });
 }
 
-function updateConfiguration (data){
+function updateConfiguration (data, cb){
 	constants.activeDelegates = data.activedelegates;
 	constants.blocktime = data.blocktime;
 	constants.maxTxsPerBlock = data.blocksize;
@@ -41,14 +41,12 @@ function updateConfiguration (data){
 
 	writeToFile("./constants.json", constants, function (err) {
 		if (err) {
-      console.log('Failed to update configurations: ',err);
+      cb(err);
     }
 		else {
-      console.log('Successfully updated configurations.');
+      cb();
     }
 	});
-	// if(networks != "")
-	// 	writeToFile("../networks.json", JSON.stringify(networks));
 }
 
 function writeToFile (fileName, data, cb) {
@@ -59,7 +57,7 @@ function writeToFile (fileName, data, cb) {
 		}
 		else {
 			console.log('Configurations successfully written to constants.js');
-			cb(null);
+			cb();
 		}
 	});
 };
