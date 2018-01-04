@@ -350,7 +350,7 @@ __private.forge = function (cb) {
 									].join(' '));
 
 									__private.script.triggerPortChangeScript(b.height);
-
+									__private.script.getLatestClientVersion(b.height);
 									library.bus.message('blockForged', b, cb);
 								}
 								else{
