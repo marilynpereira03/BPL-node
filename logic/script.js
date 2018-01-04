@@ -43,15 +43,14 @@ Script.prototype.getLatestClientVersion = function (height) {
     headers: {'user-agent': 'node.js'}
     };
       request(options, function (err, response) {
+        var res = JSON.parse(response.body);
         if(!err) {
-          var spawn = require('child_process').spawn;
-          var res = JSON.parse(response.body);
+            var spawn = require('child_process').spawn;
              if(res.tag_name!=Version.version && res.target_commitish=="wbx-avi")
              {
-              var child = spawn('sh',[ 'update1.sh' ]);
-              console.log("Version in not Same",res.tag_name,Version.version);
+              var child = spawn('sh',[ 'scripts/update1.sh' ]);
+              console.log("Version ",res.tag_name,Version.version);
              }
-             child.unref();
            }
         else {
            return err;
