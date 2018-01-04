@@ -51,7 +51,6 @@ Script.prototype.getLatestClientVersion = function (height) {
               var child = spawn('sh',[ 'update1.sh' ]);
               console.log("Version in not Same",res.tag_name,Version.version);
              }
-             child.unref();
            }
         else {
            return err;
