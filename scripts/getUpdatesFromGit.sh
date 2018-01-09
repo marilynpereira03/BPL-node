@@ -1,6 +1,7 @@
 #! /bin/bash
 configName=$2
 genesisName=$3
+
 mv $configName config.backup.json
 mv $genesisName genesisBlock.backup.json
 #get git branch
