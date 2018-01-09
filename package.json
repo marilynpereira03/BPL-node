@@ -1,7 +1,7 @@
 {
   "name": "bpl-node",
- "version": "1.0.4",
-  "private": true,
+   "version": "1.0.5",
+ "private": true,
   "scripts": {
     "start": "node app.js",
     "doc": "docco -t docs/template/arkio.jst -c docs/template/arkio.css modules/* app.js README.md",
