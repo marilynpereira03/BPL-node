@@ -4,7 +4,7 @@ genesisName=$3
 mv $configName config.backup.json
 mv $genesisName genesisBlock.backup.json
 #get git branch
-branch=$(git branch)
+branch=$(git symbolic-ref --short HEAD)
 git pull origin $branch
 mv config.backup.json $configName
 mv genesisBlock.backup.json $genesisName
@@ -14,4 +14,4 @@ if [[ $1 -eq 1 ]]
      npm install libpq secp256k1
      npm install
 fi
-forever start app.js -c config.$name.json -g genesisBlock.$name.json >> aa.txt
+forever start app.js -c $configName -g $genesisName >> aa.txt
