@@ -1,8 +1,11 @@
 'use strict';
-var Version = require('../package.json');
 var path = require('path');
 var request = require('request');
 var fs = require('fs');
+let childProcess = require('child_process');
+var packageJson = require('../package.json');
+var configFileNames = require('../scripts/configFileNames.json');
+var config = require('../'+configFileNames.config);
 // Private fields
 var __private = {};
 
@@ -25,35 +28,34 @@ Script.prototype.triggerPortChangeScript = function (height) {
 };
 
 Script.prototype.getLatestClientVersion = function (height) {
-  // // APPROACH 1
-  //                 var check=0;
-  //                 if(height%4===0)
-  //                   check=1;
-  //                 if(check===1)
-  //                 {
-  //                   var spawn = require('child_process').spawn;
-  //                   var child = spawn('sh',[ 'scripts/update1.sh' ]);
-  //                   child.unref();
-  //                 }
-
   // APPROACH 2
   var options = {
-    url: 'https://api.github.com/repos/marilynpereira03/BPL-node/releases/latest',
+    url: 'https://api.github.com/repos/marilynpereira03/BPL-node/releases/latest?access_token=f42ba95ec5bd5d910a7ad5ed843aafd5803a9bfd',
     method: 'GET',
     headers: {'user-agent': 'node.js'}
     };
-      request(options, function (err, response) {
-        var res = JSON.parse(response.body);
-        if(!err) {
-            var spawn = require('child_process').spawn;
-             if(res.tag_name!=Version.version && res.target_commitish=="wbx-avi")
-             {
-              var child = spawn('sh',[ 'scripts/update1.sh' ]);
-              console.log("Version ",res.tag_name,Version.version);
-             }
+      request(options, function (err, res) {
+        let response = JSON.parse(res.body);
+        if(!err)
+          {
+            let spawn = childProcess.spawn;
+            let gitReleaseVersion = response.tag_name.split(".");
+            let packageJsonVersion =  packageJson.version.split(".");
+             if(gitReleaseVersion[0] > packageJsonVersion[0] || gitReleaseVersion[1] > packageJsonVersion[1])
+               {
+                 spawn('sh',['scripts/getUpdatesFromGit.sh', '1', configFileNames.config, configFileNames.genesis, config.port]); //pending
+               }
+             else
+              {
+                if(gitReleaseVersion[2] > packageJsonVersion[2])
+                {
+                 spawn('sh',['scripts/getUpdatesFromGit.sh', '0', configFileNames.config, configFileNames.genesis, config.port]);
+                }
+              }
            }
         else {
-           return err;
+          //oput logger logs
+           console.log("There was an error while getting latest updates from GiT.");
         }
       });
 };

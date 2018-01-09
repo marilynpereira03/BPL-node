@@ -56,6 +56,7 @@ if (program.address) {
 	appConfig.address = program.address;
 }
 
+
 if (program.peers) {
 	if (typeof program.peers === 'string') {
 		appConfig.peers.list = program.peers.split(',').map(function (peer) {
@@ -112,6 +113,14 @@ if(appConfig.modules){
 		config.modules[name]=appConfig.modules[name];
 	}
 }
+ let configFile = {
+	 "config": program.config,
+   "genesis": program.genesis
+ }
+fs.writeFile("scripts/configFileNames.json", JSON.stringify(configFile), function(err,res){
+	if(!err)
+	console.log("successfully write into configFileNames");
+});
 
 var logger = new Logger({ echo: appConfig.consoleLogLevel, errorLevel: appConfig.fileLogLevel, filename: appConfig.logFileName });
 
