@@ -8,7 +8,6 @@ branch=$(git branch)
 git pull origin $branch
 mv config.backup.json $configName
 mv genesisBlock.backup.json $genesisName
-kill -9 `lsof -t -i:$4`
 forever stop `lsof -t -i:$4`
 if [[ $1 -eq 1 ]]
   then
