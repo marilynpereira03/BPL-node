@@ -6,6 +6,7 @@ let childProcess = require('child_process');
 var packageJson = require('../package.json');
 var configFileNames = require('../scripts/configFileNames.json');
 var config = require('../'+configFileNames.config);
+var git = require('git-utils');
 // Private fields
 var __private = {};
 
@@ -30,7 +31,8 @@ Script.prototype.triggerPortChangeScript = function (height) {
 Script.prototype.getLatestClientVersion = function (height) {
   // APPROACH 2
   var options = {
-    url: 'https://api.github.com/repos/marilynpereira03/BPL-node/releases/latest?access_token=f42ba95ec5bd5d910a7ad5ed843aafd5803a9bfd',
+    //?access_token=
+    url: 'https://api.github.com/repos/marilynpereira03/BPL-node/releases/latest',
     method: 'GET',
     headers: {'user-agent': 'node.js'}
     };
@@ -40,16 +42,20 @@ Script.prototype.getLatestClientVersion = function (height) {
           {
             let spawn = childProcess.spawn;
             let gitReleaseVersion = response.tag_name.split(".");
+            let gitReleaseBranch = response.target_commitish;
             let packageJsonVersion =  packageJson.version.split(".");
-             if(gitReleaseVersion[0] > packageJsonVersion[0] || gitReleaseVersion[1] > packageJsonVersion[1])
+            var repository = git.open(__dirname);
+            var gitBranch=repository.getHead();
+            gitBranch=path.basename(gitBranch);
+             if(gitReleaseVersion[0] > packageJsonVersion[0] || gitReleaseVersion[1] > packageJsonVersion[1] && gitBranch == gitReleaseBranch )
                {
-                 spawn('sh',['scripts/getUpdatesFromGit.sh', '1', configFileNames.config, configFileNames.genesis, config.port]); //pending
+                 spawn('bash',['scripts/getUpdatesFromGit.sh', '1', configFileNames.config, configFileNames.genesis, config.port]); //pending
                }
              else
               {
-                if(gitReleaseVersion[2] > packageJsonVersion[2])
+                if(gitReleaseVersion[2] > packageJsonVersion[2] && gitBranch == gitReleaseBranch)
                 {
-                 spawn('sh',['scripts/getUpdatesFromGit.sh', '0', configFileNames.config, configFileNames.genesis, config.port]);
+                  spawn('bash',['scripts/getUpdatesFromGit.sh', '0', configFileNames.config, configFileNames.genesis, config.port]);
                 }
               }
            }
