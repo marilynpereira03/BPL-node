@@ -14,5 +14,9 @@ tmp
 .tags
 config.main.json
 genesisBlock.main.json
+config.testnet.json
+genesisBlock.testnet.json
+config.mainnet.json
+genesisBlock.mainnet.json
 .vagrant
 private/
