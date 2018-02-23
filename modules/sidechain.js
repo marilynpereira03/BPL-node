@@ -11,7 +11,7 @@ var Router = require('../helpers/router.js');
 var schema = require('../schema/transactions.js');
 var slots = require('../helpers/slots.js');
 var sql = require('../sql/transactions.js');
-var Contract = require('../logic/smartContract.js');
+var Sidechain = require('../logic/sidechain.js');
 var transactionTypes = require('../helpers/transactionTypes.js');
 
 // Private fields
@@ -20,12 +20,12 @@ var modules, library, self, __private = {}, shared = {};
 __private.assetTypes = {};
 
 // Constructor
-function SmartContract (cb, scope) {
+function SidechainContract (cb, scope) {
 	library = scope;
 	genesisblock = library.genesisblock;
 	self = this;
-	__private.assetTypes[transactionTypes.CONTRACT] = library.logic.transaction.attachAssetType(
-		transactionTypes.CONTRACT, new Contract()
+	__private.assetTypes[transactionTypes.SIDECHAIN] = library.logic.transaction.attachAssetType(
+		transactionTypes.SIDECHAIN, new Sidechain()
 	);
 	return cb(null, self);
 }
@@ -210,7 +210,7 @@ __private.getVotesById = function (transaction, cb) {
 //__API__ `verify`
 
 //
-SmartContract.prototype.verify = function (transaction, cb) {
+SidechainContract.prototype.verify = function (transaction, cb) {
 	async.waterfall([
 		function setAccountAndGet (waterCb) {
 			modules.accounts.setAccountAndGet({publicKey: transaction.senderPublicKey}, waterCb);
@@ -227,7 +227,7 @@ SmartContract.prototype.verify = function (transaction, cb) {
 //__API__ `apply`
 
 //
-SmartContract.prototype.apply = function (transaction, block, cb) {
+SidechainContract.prototype.apply = function (transaction, block, cb) {
 	library.transactionSequence.add(function (sequenceCb){
 		library.logger.debug('Applying confirmed transaction', transaction.id);
 		modules.accounts.getAccount({publicKey: transaction.senderPublicKey}, function (err, sender) {
@@ -243,7 +243,7 @@ SmartContract.prototype.apply = function (transaction, block, cb) {
 //__API__ `undo`
 
 //
-SmartContract.prototype.undo = function (transaction, block, cb) {
+SidechainContract.prototype.undo = function (transaction, block, cb) {
 	library.transactionSequence.add(function (sequenceCb){
 		library.logger.debug('Undoing confirmed transaction', transaction.id);
 		modules.accounts.getAccount({publicKey: transaction.senderPublicKey}, function (err, sender) {
@@ -259,7 +259,7 @@ SmartContract.prototype.undo = function (transaction, block, cb) {
 //__API__ `applyUnconfirmed`
 
 //
-SmartContract.prototype.applyUnconfirmed = function (transaction, cb) {
+SidechainContract.prototype.applyUnconfirmed = function (transaction, cb) {
 	modules.accounts.setAccountAndGet({publicKey: transaction.senderPublicKey}, function (err, sender) {
 		if (!sender && transaction.blockId !== genesisblock.block.id) {
 			return cb('Invalid block id');
@@ -290,7 +290,7 @@ SmartContract.prototype.applyUnconfirmed = function (transaction, cb) {
 //__API__ `undoUnconfirmed`
 
 //
-SmartContract.prototype.undoUnconfirmed = function (transaction, cb) {
+SidechainContract.prototype.undoUnconfirmed = function (transaction, cb) {
 	library.transactionSequence.add(function (sequenceCb){
 		library.logger.debug('Undoing unconfirmed transaction', transaction.id);
 		modules.accounts.getAccount({publicKey: transaction.senderPublicKey}, function (err, sender) {
@@ -307,9 +307,9 @@ SmartContract.prototype.undoUnconfirmed = function (transaction, cb) {
 //__EVENT__ `onBind`
 
 //
-SmartContract.prototype.onBind = function (scope) {
+SidechainContract.prototype.onBind = function (scope) {
 	modules = scope;
-	__private.assetTypes[transactionTypes.CONTRACT].bind({
+	__private.assetTypes[transactionTypes.SIDECHAIN].bind({
 		modules: modules, library: library
 	});
 };
@@ -319,7 +319,7 @@ SmartContract.prototype.onBind = function (scope) {
 //__EVENT__ `onAttachPublicApi`
 
 //
-SmartContract.prototype.onAttachPublicApi = function () {
+SidechainContract.prototype.onAttachPublicApi = function () {
  	__private.attachApi();
 };
 
@@ -327,7 +327,7 @@ SmartContract.prototype.onAttachPublicApi = function () {
 //__EVENT__ `onPeersReady`
 
 //
-SmartContract.prototype.onPeersReady = function () {
+SidechainContract.prototype.onPeersReady = function () {
 };
 
 // Shared
@@ -472,7 +472,7 @@ shared.addTransactions = function (req, cb) {
 
 							try {
 								transaction = library.logic.transaction.create({
-									type: transactionTypes.CONTRACT,
+									type: transactionTypes.SIDECHAIN,
 									amount: req.body.amount,
 									sender: account,
 									recipientId: recipientId,
@@ -520,7 +520,7 @@ shared.addTransactions = function (req, cb) {
 
 						try {
 							transaction = library.logic.transaction.create({
-								type: transactionTypes.CONTRACT,
+								type: transactionTypes.SIDECHAIN,
 								amount: req.body.amount,
 								sender: account,
 								vendorField: req.body.vendorField,
@@ -549,5 +549,4 @@ shared.addTransactions = function (req, cb) {
 };
 
 // Export
-module.exports = SmartContract;
-
+module.exports = SidechainContract;

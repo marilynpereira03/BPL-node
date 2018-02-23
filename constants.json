@@ -11,7 +11,8 @@
     "secondsignature": 500000000,
     "delegate": 1000000000,
     "multisignature": 500000000,
-    "smartContract": 10000000
+    "smartcontract": 10000000,
+    "sidechain":10000000
   },
   "feeStart": 1,
   "feeStartVolume": 1000000000000,

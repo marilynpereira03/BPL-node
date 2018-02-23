@@ -6,14 +6,14 @@ var constants = require('../constants.json');
 var modules, library;
 
 // Constructor
-function Contract () {}
+function Sidechain () {}
 
 // Public methods
 //
 //__API__ `bind`
 
 //
-Contract.prototype.bind = function (scope) {
+Sidechain.prototype.bind = function (scope) {
 	modules = scope.modules;
 	library = scope.library;
 };
@@ -22,7 +22,7 @@ Contract.prototype.bind = function (scope) {
 //__API__ `create`
 
 //
-Contract.prototype.create = function (data, trs) {
+Sidechain.prototype.create = function (data, trs) {
 	trs.recipientId = null;
 	trs.amount = 0;
 	trs.asset.hash = data.hash;
@@ -33,27 +33,39 @@ Contract.prototype.create = function (data, trs) {
 //__API__ `calculateFee`
 
 //
-Contract.prototype.calculateFee = function (trs) {
-	return constants.fees.smartContract;
+Sidechain.prototype.calculateFee = function (trs) {
+	return constants.fees.smartSidechain;
 };
 
 //
 //__API__ `verify`
 
 //
-Contract.prototype.verify = function (trs, sender, cb) {
+Sidechain.prototype.verify = function (trs, sender, cb) {
 	if (!trs.asset || !trs.asset.hash) {
 		return cb('Hash is undefined.');
 	}
 
 	if (!trs.asset.hash.length) {
-		return cb('Invalid Smart Contract hash. Must not be empty');
+		return cb('Invalid Smart Sidechain hash. Must not be empty');
 	}
 
 
-	if (!trs.asset.label.length) {
-		return cb('Invalid Smart Contract label. Must not be empty');
+  if (!trs.asset.config.delegate) {
+		return cb('Invalid Delegate. Must not be empty');
 	}
+  if (!trs.asset.config.blocktime) {
+		return cb('Invalid blocktime. Must not be empty');
+	}
+  if (!trs.asset.config.reward.length) {
+    return cb('Invalid reawrds. Must not be empty');
+  }
+  if (!trs.asset.config.rewardType.length) {
+    return cb('Invalid reawrd type. Must not be empty');
+  }
+  if (!trs.asset.config.tokenShortName.length) {
+    return cb('Invalid token short name type. Must not be empty');
+  }
 	return cb(null, trs);
 };
 
@@ -61,7 +73,7 @@ Contract.prototype.verify = function (trs, sender, cb) {
 //__API__ `process`
 
 //
-Contract.prototype.process = function (trs, sender, cb) {
+Sidechain.prototype.process = function (trs, sender, cb) {
 	return cb(null, trs);
 };
 
@@ -69,7 +81,7 @@ Contract.prototype.process = function (trs, sender, cb) {
 //__API__ `getBytes`
 
 //ToDo
-Contract.prototype.getBytes = function (trs) {
+Sidechain.prototype.getBytes = function (trs) {
 	return null;
 };
 
@@ -77,10 +89,9 @@ Contract.prototype.getBytes = function (trs) {
 //__API__ `apply`
 
 //
-Contract.prototype.apply = function (trs, block, sender, cb) {
+Sidechain.prototype.apply = function (trs, block, sender, cb) {
 	var data = {
 		address: sender.address
-
 	};
 	modules.accounts.setAccountAndGet(data, cb);
 };
@@ -89,7 +100,7 @@ Contract.prototype.apply = function (trs, block, sender, cb) {
 //__API__ `undo`
 
 //
-Contract.prototype.undo = function (trs, block, sender, cb) {
+Sidechain.prototype.undo = function (trs, block, sender, cb) {
 	modules.accounts.setAccountAndGet({address: trs.recipientId}, function (err, recipient) {
 		if (err) {
 			return cb(err);
@@ -109,7 +120,7 @@ Contract.prototype.undo = function (trs, block, sender, cb) {
 //__API__ `applyUnconfirmed`
 
 //
-Contract.prototype.applyUnconfirmed = function (trs, sender, cb) {
+Sidechain.prototype.applyUnconfirmed = function (trs, sender, cb) {
 	return cb(null, trs);
 };
 
@@ -117,7 +128,7 @@ Contract.prototype.applyUnconfirmed = function (trs, sender, cb) {
 //__API__ `undoUnconfirmed`
 
 //
-Contract.prototype.undoUnconfirmed = function (trs, sender, cb) {
+Sidechain.prototype.undoUnconfirmed = function (trs, sender, cb) {
 	return cb(null, trs);
 };
 
@@ -125,7 +136,7 @@ Contract.prototype.undoUnconfirmed = function (trs, sender, cb) {
 //__API__ `objectNormalize`
 
 //
-Contract.prototype.objectNormalize = function (trs) {
+Sidechain.prototype.objectNormalize = function (trs) {
 	delete trs.blockId;
 	return trs;
 };
@@ -134,7 +145,7 @@ Contract.prototype.objectNormalize = function (trs) {
 //__API__ `dbRead`
 
 //
-Contract.prototype.dbRead = function (raw) {
+Sidechain.prototype.dbRead = function (raw) {
 	return null;
 };
 
@@ -142,7 +153,7 @@ Contract.prototype.dbRead = function (raw) {
 //__API__ `dbSave`
 
 //
-Contract.prototype.dbSave = function (trs) {
+Sidechain.prototype.dbSave = function (trs) {
 	return null;
 };
 
@@ -150,7 +161,7 @@ Contract.prototype.dbSave = function (trs) {
 //__API__ `ready`
 
 //
-Contract.prototype.ready = function (trs, sender) {
+Sidechain.prototype.ready = function (trs, sender) {
 	if (Array.isArray(sender.multisignatures) && sender.multisignatures.length) {
 		if (!Array.isArray(trs.signatures)) {
 			return false;
@@ -162,5 +173,4 @@ Contract.prototype.ready = function (trs, sender) {
 };
 
 // Export
-module.exports = Contract;
-
+module.exports = Sidechain;

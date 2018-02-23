@@ -101,7 +101,8 @@ var config = {
 		blockchain: './modules/blockchain.js',
 		nodeManager: './modules/nodeManager.js',
 		blockRewards: './modules/blockRewards.js',
-		smartContract: './modules/smartContract.js'
+		smartContract: './modules/contract.js',
+		sidechain: './modules/sidechain.js'
 	}
 };
 

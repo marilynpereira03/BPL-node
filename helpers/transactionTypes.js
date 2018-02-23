@@ -7,5 +7,6 @@ module.exports = {
 	VOTE: 3,
 	MULTI: 4,
 	IPFS: 5,
-	CONTRACT: 6
+	CONTRACT: 6,
+	SIDECHAIN:7
 };
