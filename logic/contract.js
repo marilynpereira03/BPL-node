@@ -48,7 +48,7 @@ Contract.prototype.verify = function (trs, sender, cb) {
 	if (!trs.asset.hash.length) {
 		return cb('Invalid Smart Contract hash. Must not be empty');
 	}
-	if (!trs.label.length) {
+	if (!trs.label || trs.label.length) {
 		return cb('Invalid Smart Contract label. Must not be empty');
 	}
 	return cb(null, trs);
