@@ -34,7 +34,7 @@ Contract.prototype.create = function (data, trs) {
 
 //
 Contract.prototype.calculateFee = function (trs) {
-	return constants.fees.smartContract;
+	return constants.fees.smartcontract;
 };
 
 //
@@ -45,13 +45,10 @@ Contract.prototype.verify = function (trs, sender, cb) {
 	if (!trs.asset || !trs.asset.hash) {
 		return cb('Hash is undefined.');
 	}
-
 	if (!trs.asset.hash.length) {
 		return cb('Invalid Smart Contract hash. Must not be empty');
 	}
-
-
-	if (!trs.asset.label.length) {
+	if (!trs.label.length) {
 		return cb('Invalid Smart Contract label. Must not be empty');
 	}
 	return cb(null, trs);
@@ -70,7 +67,13 @@ Contract.prototype.process = function (trs, sender, cb) {
 
 //ToDo
 Contract.prototype.getBytes = function (trs) {
-	return null;
+	var buf;
+	try {
+		buf = trs.asset.hash ? new Buffer(trs.asset.hash, 'utf8') : null;
+	} catch (e) {
+		throw e;
+	}
+	return buf;
 };
 
 //

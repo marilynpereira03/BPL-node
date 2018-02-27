@@ -34,7 +34,7 @@ Sidechain.prototype.create = function (data, trs) {
 
 //
 Sidechain.prototype.calculateFee = function (trs) {
-	return constants.fees.smartSidechain;
+	return constants.fees.sidechain;
 };
 
 //
@@ -45,16 +45,13 @@ Sidechain.prototype.verify = function (trs, sender, cb) {
 	if (!trs.asset || !trs.asset.hash) {
 		return cb('Hash is undefined.');
 	}
-
 	if (!trs.asset.hash.length) {
 		return cb('Invalid Smart Sidechain hash. Must not be empty');
 	}
-
-
   if (!trs.asset.config.delegate) {
 		return cb('Invalid Delegate. Must not be empty');
 	}
-  if (!trs.asset.config.blocktime) {
+  if (!trs.asset.config.blockTime) {
 		return cb('Invalid blocktime. Must not be empty');
 	}
   if (!trs.asset.config.reward.length) {
@@ -82,7 +79,15 @@ Sidechain.prototype.process = function (trs, sender, cb) {
 
 //ToDo
 Sidechain.prototype.getBytes = function (trs) {
-	return null;
+	var buf;
+
+	try {
+		buf = trs.asset.hash ? new Buffer(trs.asset.hash, 'utf8') : null;
+	} catch (e) {
+		throw e;
+	}
+
+	return buf;
 };
 
 //
