@@ -48,21 +48,31 @@ Sidechain.prototype.verify = function (trs, sender, cb) {
 	if (!trs.asset.hash.length) {
 		return cb('Invalid Smart Sidechain hash. Must not be empty');
 	}
-  if (!trs.asset.config.delegate) {
+  if (!trs.asset.config.activeDelegates) {
 		return cb('Invalid Delegate. Must not be empty');
 	}
   if (!trs.asset.config.blockTime) {
 		return cb('Invalid blocktime. Must not be empty');
 	}
-  if (!trs.asset.config.reward.length) {
+  if (!trs.asset.config.rewards.milestones.length) {
     return cb('Invalid reawrds. Must not be empty');
   }
-  if (!trs.asset.config.rewardType.length) {
+  if (!trs.asset.config.rewards.type.length) {
     return cb('Invalid reawrd type. Must not be empty');
   }
   if (!trs.asset.config.tokenShortName.length) {
     return cb('Invalid token short name type. Must not be empty');
   }
+	if (!trs.asset.config.rewards.offset) {
+    return cb('Invalid offset. Must not be empty');
+  }
+	if (!trs.asset.config.rewards.distance) {
+    return cb('Invalid distance. Must not be empty');
+  }
+	if (!trs.asset.config.totalAmount) {
+    return cb('Invalid total amount. Must not be empty');
+  }
+
 	return cb(null, trs);
 };
 
