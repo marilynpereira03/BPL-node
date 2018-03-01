@@ -60,13 +60,13 @@ Sidechain.prototype.verify = function (trs, sender, cb) {
   if (!trs.asset.config.blockTime) {
 		return cb('Block Time must not be empty');
 	}
-	if(!trs.asset.rewards) {
+	if(!trs.asset.config.rewards) {
 		return cb('Invalid rewards asset.');
 	}
   if (!trs.asset.config.rewards.milestones || !trs.asset.config.rewards.milestones.length) {
     return cb('Invalid milestones asset.');
   }
-  if (trs.asset.config.rewards.type != "proportional" || trs.asset.config.rewards.type != "static") {
+  if (!(trs.asset.config.rewards.type != "proportional" || trs.asset.config.rewards.type != "static")) {
     return cb('Reward type must be static or proportional.');
   }
 	if (!trs.asset.config.rewards.offset) {
@@ -81,7 +81,21 @@ Sidechain.prototype.verify = function (trs, sender, cb) {
 	if (!trs.asset.config.totalAmount) {
     return cb('Invalid total amount.');
   }
-
+	if (!trs.asset.genesis) {
+    return cb('Invalid genesis object.');
+  }
+	if (!trs.asset.transactionStatus) {
+    return cb('Invalid transaction status.');
+  }
+	if (!trs.asset.config.peers) {
+    return cb('Invalid peers asset.');
+  }
+	if (!trs.asset.config.nethash) {
+    return cb('Invalid nethash.');
+  }
+	if (!trs.asset.config.peers.list.length || !trs.asset.config.peers.list ) {
+		return cb('Invalid seed peers.');
+	}
 	return cb(null, trs);
 };
 
