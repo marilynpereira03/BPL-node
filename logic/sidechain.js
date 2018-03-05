@@ -54,31 +54,34 @@ Sidechain.prototype.verify = function (trs, sender, cb) {
 	if(!trs.asset.config) {
 		return cb('Invalid config asset.');
 	}
-  if (!trs.asset.config.activeDelegates) {
+	if(!trs.asset.constants) {
+		return cb('Invalid conatants asset.');
+	}
+  if (!trs.asset.constants.activeDelegates) {
 		return cb('Active delegates must not be empty.');
 	}
-  if (!trs.asset.config.blockTime) {
+  if (!trs.asset.constants.blockTime) {
 		return cb('Block Time must not be empty');
 	}
-	if(!trs.asset.config.rewards) {
+	if(!trs.asset.constants.rewards) {
 		return cb('Invalid rewards asset.');
 	}
-  if (!trs.asset.config.rewards.milestones || !trs.asset.config.rewards.milestones.length) {
+  if (!trs.asset.constants.rewards.milestones || !trs.asset.constants.rewards.milestones.length) {
     return cb('Invalid milestones asset.');
   }
-  if (!(trs.asset.config.rewards.type != "proportional" || trs.asset.config.rewards.type != "static")) {
+  if (!(trs.asset.constants.rewards.type != "proportional" || trs.asset.constants.rewards.type != "static")) {
     return cb('Reward type must be static or proportional.');
   }
-	if (!trs.asset.config.rewards.offset) {
+	if (!trs.asset.constants.rewards.offset) {
 		return cb('Invalid reward offset.');
 	}
-	if (!trs.asset.config.rewards.distance) {
+	if (!trs.asset.constants.rewards.distance) {
 		return cb('Invalid reward distance.');
 	}
   if (!trs.asset.config.tokenShortName || !trs.asset.config.tokenShortName.length) {
     return cb('Invalid token short name.');
   }
-	if (!trs.asset.config.totalAmount) {
+	if (!trs.asset.constants.totalAmount) {
     return cb('Invalid total amount.');
   }
 	if (!trs.asset.genesis) {
@@ -87,15 +90,12 @@ Sidechain.prototype.verify = function (trs, sender, cb) {
 	if (!trs.asset.transactionStatus) {
     return cb('Invalid transaction status.');
   }
-	if (!trs.asset.config.peers) {
+	if (!trs.asset.config.peersList) {
     return cb('Invalid peers asset.');
   }
 	if (!trs.asset.config.nethash) {
     return cb('Invalid nethash.');
   }
-	if (!trs.asset.config.peers.list.length || !trs.asset.config.peers.list ) {
-		return cb('Invalid seed peers.');
-	}
 	return cb(null, trs);
 };
 
