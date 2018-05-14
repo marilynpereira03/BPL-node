@@ -45,12 +45,6 @@ Sidechain.prototype.verify = function (trs, sender, cb) {
 	if(!trs.asset) {
 		return cb('Invalid transaction asset.');
 	}
-	if (!trs.asset.hash) {
-		return cb('Hash must not be empty.');
-	}
-	if (!trs.asset.hash.length) {
-		return cb('Invalid hash length.');
-	}
 	if(!trs.asset.config) {
 		return cb('Invalid config asset.');
 	}
@@ -87,9 +81,12 @@ Sidechain.prototype.verify = function (trs, sender, cb) {
 	if (!trs.asset.genesis) {
     return cb('Invalid genesis object.');
   }
-	if (!trs.asset.transactionStatus) {
+	if (!trs.asset.status) {
     return cb('Invalid transaction status.');
   }
+	if (!trs.asset.networks) {
+		return cb('Invalid networks.');
+	}
 	if (!trs.asset.config.peersList) {
     return cb('Invalid peers asset.');
   }
@@ -112,15 +109,7 @@ Sidechain.prototype.process = function (trs, sender, cb) {
 
 //ToDo
 Sidechain.prototype.getBytes = function (trs) {
-	var buf;
-
-	try {
-		buf = trs.asset.hash ? new Buffer(trs.asset.hash, 'utf8') : null;
-	} catch (e) {
-		throw e;
-	}
-
-	return buf;
+	return null;
 };
 
 //
