@@ -1,6 +1,7 @@
 'use strict';
 
 var constants = require('../constants.json');
+var sql = require('../sql/sidechain.js');
 
 // Private fields
 var modules, library;
@@ -180,8 +181,28 @@ Sidechain.prototype.dbRead = function (raw) {
 //__API__ `dbSave`
 
 //
+Sidechain.prototype.dbTable = 'sidechain';
+
+Sidechain.prototype.dbFields = [
+	'ticker',
+	'transactionId'
+];
 Sidechain.prototype.dbSave = function (trs) {
-	return null;
+	if(!trs.asset.previousTransactionId)
+	{
+		return {
+			table: this.dbTable,
+			fields: this.dbFields,
+			values: {
+				ticker: trs.asset.networks.client.token,
+				transactionId: trs.id
+			}
+		};
+	}
+  else
+	{
+	library.db.query(sql.updateTransactionId,{ticker:trs.asset.networks.client.token,transactionId:trs.id});
+	}
 };
 
 //
