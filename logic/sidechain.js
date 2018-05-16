@@ -205,14 +205,14 @@ Sidechain.prototype.dbSave = function (trs) {
 			table: this.dbTable,
 			fields: this.dbFields,
 			values: {
-				ticker: trs.asset.networks.client.tokenShortName,
+				ticker: trs.asset.networks.tokenShortName,
 				transactionId: trs.id
 			}
 		};
 	}
   else
 	{
-	library.db.query(sql.updateTransactionId,{ticker:trs.asset.networks.client.tokenShortName,transactionId:trs.id});
+	library.db.query(sql.updateTransactionId,{ticker:trs.asset.networks.tokenShortName,transactionId:trs.id});
 	}
 };
 
