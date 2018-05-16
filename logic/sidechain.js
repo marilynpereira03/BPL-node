@@ -26,7 +26,6 @@ Sidechain.prototype.bind = function (scope) {
 Sidechain.prototype.create = function (data, trs) {
 	trs.recipientId = null;
 	trs.amount = 0;
-	trs.asset.hash = data.hash;
 	return trs;
 };
 
@@ -47,10 +46,10 @@ Sidechain.prototype.verify = function (trs, sender, cb) {
 		return cb('Invalid transaction asset.');
 	}
 	if(!trs.asset.config) {
-		return cb('Invalid config asset.');
+		return cb('Invalid asset config. Must be an object.');
 	}
 	if(!trs.asset.constants) {
-		return cb('Invalid conatants asset.');
+		return cb('Invalid constants asset.');
 	}
   if (!trs.asset.constants.activeDelegates) {
 		return cb('Active delegates must not be empty.');
@@ -73,9 +72,6 @@ Sidechain.prototype.verify = function (trs, sender, cb) {
 	if (!trs.asset.constants.rewards.distance) {
 		return cb('Invalid reward distance.');
 	}
-  if (!trs.asset.config.tokenShortName || !trs.asset.config.tokenShortName.length) {
-    return cb('Invalid token short name.');
-  }
 	if (!trs.asset.constants.totalAmount) {
     return cb('Invalid total amount.');
   }
@@ -85,15 +81,30 @@ Sidechain.prototype.verify = function (trs, sender, cb) {
 	if (!trs.asset.status) {
     return cb('Invalid transaction status.');
   }
-	if (!trs.asset.networks) {
-		return cb('Invalid networks.');
-	}
 	if (!trs.asset.config.peersList) {
     return cb('Invalid peers asset.');
   }
 	if (!trs.asset.config.nethash) {
     return cb('Invalid nethash.');
   }
+	if (!trs.asset.networks) {
+		return cb('Invalid networks.');
+	}
+	if (!trs.asset.networks.token) {
+		return cb('Invalid token name.');
+	}
+	if (!trs.asset.networks.tokenShortName || !trs.asset.networks.tokenShortName.length) {
+		return cb('Invalid token short name.');
+	}
+	if (!trs.asset.networks.pubKeyHash) {
+		return cb('Invalid pubKeyHash.');
+	}
+	if (!trs.asset.networks.symbol) {
+		return cb('Invalid symbol name.');
+	}
+	if (!trs.asset.networks.explorer) {
+		return cb('Invalid explorer link.');
+	}
 	return cb(null, trs);
 };
 
@@ -188,20 +199,20 @@ Sidechain.prototype.dbFields = [
 	'transactionId'
 ];
 Sidechain.prototype.dbSave = function (trs) {
-	if(!trs.asset.previousTransactionId)
+	if(!trs.asset.prevTransactionId)
 	{
 		return {
 			table: this.dbTable,
 			fields: this.dbFields,
 			values: {
-				ticker: trs.asset.networks.client.token,
+				ticker: trs.asset.networks.client.tokenShortName,
 				transactionId: trs.id
 			}
 		};
 	}
   else
 	{
-	library.db.query(sql.updateTransactionId,{ticker:trs.asset.networks.client.token,transactionId:trs.id});
+	library.db.query(sql.updateTransactionId,{ticker:trs.asset.networks.client.tokenShortName,transactionId:trs.id});
 	}
 };
 
