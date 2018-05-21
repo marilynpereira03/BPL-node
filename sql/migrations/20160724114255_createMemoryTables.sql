@@ -75,6 +75,11 @@ CREATE TABLE IF NOT EXISTS "sidechain"(
   "transactionId" VARCHAR(64) NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS "smart_contract"(
+  "accountId" VARCHAR(36) NOT NULL,
+  "transactionId" VARCHAR(64) NOT NULL,
+  "isActive" VARCHAR(5) NOT NULL
+);
 
 CREATE INDEX IF NOT EXISTS "mem_delegates_vote" ON "mem_delegates"("vote");
 

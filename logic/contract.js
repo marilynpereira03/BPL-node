@@ -1,7 +1,8 @@
 'use strict';
 
 var constants = require('../constants.json');
-
+var sql = require('../sql/smartContract.js');
+var bpljs = require('bpljs');
 // Private fields
 var modules, library;
 
@@ -25,7 +26,7 @@ Contract.prototype.bind = function (scope) {
 Contract.prototype.create = function (data, trs) {
 	trs.recipientId = null;
 	trs.amount = 0;
-	trs.asset.hash = data.hash;
+	trs.asset.smartContract.type = data.type;
 	return trs;
 };
 
@@ -42,16 +43,25 @@ Contract.prototype.calculateFee = function (trs) {
 
 //
 Contract.prototype.verify = function (trs, sender, cb) {
-	if (!trs.asset || !trs.asset.hash) {
-		return cb('Hash is undefined.');
+	if (!trs.asset || !trs.asset.smartContract) {
+		return cb('Smart contract object is undefined.');
 	}
-	if (!trs.asset.hash.length) {
-		return cb('Invalid Smart Contract hash. Must not be empty');
+	if (!trs.asset.smartContract.type.length) {
+		return cb('Invalid Smart Contract type. Must not be empty');
 	}
-	if (!trs.label || trs.label.length) {
-		return cb('Invalid Smart Contract label. Must not be empty');
+	if (!trs.asset.smartContract.cause) {
+		return cb('Invalid cause asset.');
 	}
-	return cb(null, trs);
+	if (!trs.asset.smartContract.cause.address) {
+		return cb('Invalid account address.');
+	}
+	if (!trs.asset.smartContract.cause.minConfirmations) {
+		return cb('Invalid minimum number of confirmations.');
+	}
+	if (!trs.asset.smartContract.effect) {
+		return cb('Invalid cause asset.');
+	}
+		return cb(null, trs);
 };
 
 //
@@ -69,7 +79,7 @@ Contract.prototype.process = function (trs, sender, cb) {
 Contract.prototype.getBytes = function (trs) {
 	var buf;
 	try {
-		buf = trs.asset.hash ? new Buffer(trs.asset.hash, 'utf8') : null;
+		buf = trs.asset.smartContract.type ? new Buffer(trs.asset.smartContract.type, 'utf8') : null;
 	} catch (e) {
 		throw e;
 	}
@@ -144,8 +154,30 @@ Contract.prototype.dbRead = function (raw) {
 //__API__ `dbSave`
 
 //
+Contract.prototype.dbTable = 'smart_contract';
+
+Contract.prototype.dbFields = [
+	'accountId',
+	'transactionId',
+	'isActive'
+];
 Contract.prototype.dbSave = function (trs) {
-	return null;
+	if(!trs.asset.prevTransactionId)
+	{
+		return {
+			table: this.dbTable,
+			fields: this.dbFields,
+			values: {
+				accountId: bpljs.crypto.getAddress(trs.senderPublicKey,73),
+				transactionId: trs.id,
+				isActive: true
+			}
+		};
+	}
+	else
+	{
+	library.db.query(sql.updateTransactionId,{accountId:bpljs.crypto.getAddress(trs.senderPublicKey,73), transactionId:trs.id, prevTransactionId: trs.asset.prevTransactionId});
+	}
 };
 
 //
