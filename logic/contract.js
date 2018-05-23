@@ -162,22 +162,15 @@ Contract.prototype.dbFields = [
 	'isActive'
 ];
 Contract.prototype.dbSave = function (trs) {
-	if(!trs.asset.prevTransactionId)
-	{
 		return {
 			table: this.dbTable,
 			fields: this.dbFields,
 			values: {
-				accountId: bpljs.crypto.getAddress(trs.senderPublicKey,73),
+				accountId: bpljs.crypto.getAddress(trs.senderPublicKey),
 				transactionId: trs.id,
 				isActive: true
 			}
 		};
-	}
-	else
-	{
-	library.db.query(sql.updateTransactionId,{accountId:bpljs.crypto.getAddress(trs.senderPublicKey,73), transactionId:trs.id, prevTransactionId: trs.asset.prevTransactionId});
-	}
 };
 
 //
