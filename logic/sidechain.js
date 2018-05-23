@@ -1,7 +1,7 @@
 'use strict';
 
 var constants = require('../constants.json');
-var sql = require('../sql/sidechain.js');
+var sql = require('../sql/sidechains.js');
 
 // Private fields
 var modules, library;
@@ -104,6 +104,14 @@ Sidechain.prototype.verify = function (trs, sender, cb) {
 	}
 	if (!trs.asset.networks.explorer) {
 		return cb('Invalid explorer link.');
+	}
+	if(!trs.asset.prevTransactionId)
+	{
+	  library.db.query(sql.getSidechain,{ticker:trs.asset.networks.tokenShortName}).then(function (rows) {
+			if(rows[0].count) {
+				return cb('Sidechain ticker name already exist.');
+			}
+		});
 	}
 	return cb(null, trs);
 };

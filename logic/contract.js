@@ -1,7 +1,6 @@
 'use strict';
 
 var constants = require('../constants.json');
-var sql = require('../sql/smartContract.js');
 var bpljs = require('bpljs');
 // Private fields
 var modules, library;
@@ -35,7 +34,7 @@ Contract.prototype.create = function (data, trs) {
 
 //
 Contract.prototype.calculateFee = function (trs) {
-	return constants.fees.smartcontract;
+	return constants.fees.contract;
 };
 
 //
@@ -78,11 +77,13 @@ Contract.prototype.process = function (trs, sender, cb) {
 //ToDo
 Contract.prototype.getBytes = function (trs) {
 	var buf;
-	try {
-		buf = trs.asset.smartContract.type ? new Buffer(trs.asset.smartContract.type, 'utf8') : null;
-	} catch (e) {
-		throw e;
-	}
+		if(trs.asset.smartContract.type)
+		{
+			buf = new Buffer(trs.asset.smartContract.type, 'utf8');
+		}
+		else {
+			return null;
+		}
 	return buf;
 };
 

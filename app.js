@@ -19,10 +19,9 @@ var colors = require('colors');
 var vorpal = require('vorpal')();
 var spawn = require('child_process').spawn;
 var constants = require('./constants.json');
-let getConfiguration = require('./helpers/configuration.js');
+// let getConfiguration = require('./helpers/configuration.js');
 process.env.CONFIG_NAME = appConfig;
 process.env.GENESIS_NAME = genesisblock;
-
 process.stdin.resume();
 var versionBuild = fs.readFileSync(path.join(__dirname, 'build'), 'utf8');
 
@@ -30,7 +29,6 @@ program
 	.version(packageJson.version)
 	.option('-c, --config <path>', 'config file path')
 	.option('-g, --genesis <path>', 'genesis block')
-	.option('-s --sidechain <name>', 'name of the sidechain')
 	.option('-n, --networks <path>', 'networks definition file')
 	.option('-p, --port <port>', 'listening port number')
 	.option('-a, --address <ip>', 'listening host name or ip')
@@ -38,7 +36,6 @@ program
 	.option('-l, --log <level>', 'log level')
 	.option('-i, --interactive', 'launch cli')
 	.parse(process.argv);
-
 if (program.config) {
 	appConfig = require(path.resolve(process.cwd(), program.config));
 	process.env.CONFIG_NAME = program.config;
@@ -82,7 +79,6 @@ if (program.log) {
 if (program.interactive) {
 	appConfig.consoleLogLevel = "none";
 }
-
 var config = {
 	db: appConfig.db,
 	modules: {
@@ -101,8 +97,8 @@ var config = {
 		blockchain: './modules/blockchain.js',
 		nodeManager: './modules/nodeManager.js',
 		blockRewards: './modules/blockRewards.js',
-		smartContract: './modules/contract.js',
-		sidechain: './modules/sidechain.js'
+		contracts: './modules/contracts.js',
+		sidechain: './modules/sidechains.js'
 	}
 };
 
@@ -120,25 +116,11 @@ if(appConfig.modules){
 	}
 }
 
-if (program.sidechain) {
-	getConfiguration(program.name, function(err) {
-		//if(!err) { }
-		console.log('Err: ',err);
-		start();
-	});
-}
-else {
-	getConfiguration('BPL-mainnet', function(err) {
-		//if(!err) { }
-		start();
-	});
-}
-
+start();
 function start() {
 	var logger = new Logger({ echo: appConfig.consoleLogLevel, errorLevel: appConfig.fileLogLevel, filename: appConfig.logFileName });
 
 	var d = require('domain').create();
-
 	d.on('error', function (err) {
 		logger.fatal('Domain master', { message: err.message, stack: err.stack });
 		process.exit(0);
@@ -487,6 +469,7 @@ function start() {
 						d.run(function () {
 							logger.debug('Loading module', name);
 							var Klass = require(config.modules[name]);
+							console.log("Klass",Klass);
 							var obj = new Klass(cb, scope);
 							modules.push(obj);
 						});
