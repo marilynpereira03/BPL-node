@@ -1,7 +1,7 @@
 'use strict';
 
-var smartContractSql = {
+var contractSql = {
   updateTransactionId: 'UPDATE smart_contract SET "transactionId" = ${transactionId} where "accountId" = ${accountId} and "transactionId" = ${prevTransactionId};'
 };
 
-module.exports = smartContractSql;
+module.exports = contractSql;

@@ -51,21 +51,21 @@ Sidechain.prototype.verify = function (trs, sender, cb) {
 	if(!trs.asset.constants) {
 		return cb('Invalid constants asset.');
 	}
-  if (!trs.asset.constants.activeDelegates) {
+	if (!trs.asset.constants.activeDelegates) {
 		return cb('Active delegates must not be empty.');
 	}
-  if (!trs.asset.constants.blockTime) {
+	if (!trs.asset.constants.blockTime) {
 		return cb('Block Time must not be empty');
 	}
 	if(!trs.asset.constants.rewards) {
 		return cb('Invalid rewards asset.');
 	}
-  if (!trs.asset.constants.rewards.milestones || !trs.asset.constants.rewards.milestones.length) {
-    return cb('Invalid milestones asset.');
-  }
-  if (!(trs.asset.constants.rewards.type != "proportional" || trs.asset.constants.rewards.type != "static")) {
-    return cb('Reward type must be static or proportional.');
-  }
+	if (!trs.asset.constants.rewards.milestones || !trs.asset.constants.rewards.milestones.length) {
+		return cb('Invalid milestones asset.');
+	}
+	if (!(trs.asset.constants.rewards.type != 'proportional' || trs.asset.constants.rewards.type != 'static')) {
+		return cb('Reward type must be static or proportional.');
+	}
 	if (!trs.asset.constants.rewards.offset) {
 		return cb('Invalid reward offset.');
 	}
@@ -73,20 +73,20 @@ Sidechain.prototype.verify = function (trs, sender, cb) {
 		return cb('Invalid reward distance.');
 	}
 	if (!trs.asset.constants.totalAmount) {
-    return cb('Invalid total amount.');
-  }
+		return cb('Invalid total amount.');
+	}
 	if (!trs.asset.genesis) {
-    return cb('Invalid genesis object.');
-  }
+		return cb('Invalid genesis object.');
+	}
 	if (!trs.asset.status) {
-    return cb('Invalid transaction status.');
-  }
+		return cb('Invalid transaction status.');
+	}
 	if (!trs.asset.config.peersList) {
-    return cb('Invalid peers asset.');
-  }
+		return cb('Invalid peers asset.');
+	}
 	if (!trs.asset.config.nethash) {
-    return cb('Invalid nethash.');
-  }
+		return cb('Invalid nethash.');
+	}
 	if (!trs.asset.networks) {
 		return cb('Invalid networks.');
 	}
@@ -107,7 +107,7 @@ Sidechain.prototype.verify = function (trs, sender, cb) {
 	}
 	if(!trs.asset.prevTransactionId)
 	{
-	  library.db.query(sql.countByTicker, {ticker: trs.asset.networks.tokenShortName}).then(function (rows) {
+		library.db.query(sql.countByTicker, {ticker: trs.asset.networks.tokenShortName}).then(function (rows) {
 			if(rows[0].count) {
 				return cb('Sidechain ticker name already exist.');
 			}
@@ -220,7 +220,7 @@ Sidechain.prototype.dbSave = function (trs) {
 			}
 		};
 	}
-  else
+	else
 	{
 		library.db.query(sql.updateTransactionId,{ticker: trs.asset.networks.tokenShortName, transactionId: trs.id});
 	}

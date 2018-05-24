@@ -60,7 +60,7 @@ Contract.prototype.verify = function (trs, sender, cb) {
 	if (!trs.asset.smartContract.effect) {
 		return cb('Invalid cause asset.');
 	}
-		return cb(null, trs);
+	return cb(null, trs);
 };
 
 //
@@ -77,13 +77,13 @@ Contract.prototype.process = function (trs, sender, cb) {
 //ToDo
 Contract.prototype.getBytes = function (trs) {
 	var buf;
-		if(trs.asset.smartContract.type)
-		{
-			buf = new Buffer(trs.asset.smartContract.type, 'utf8');
-		}
-		else {
-			return null;
-		}
+	if(trs.asset.smartContract.type)
+	{
+		buf = new Buffer(trs.asset.smartContract.type, 'utf8');
+	}
+	else {
+		return null;
+	}
 	return buf;
 };
 
@@ -163,15 +163,15 @@ Contract.prototype.dbFields = [
 	'isActive'
 ];
 Contract.prototype.dbSave = function (trs) {
-		return {
-			table: this.dbTable,
-			fields: this.dbFields,
-			values: {
-				accountId: bpljs.crypto.getAddress(trs.senderPublicKey),
-				transactionId: trs.id,
-				isActive: true
-			}
-		};
+	return {
+		table: this.dbTable,
+		fields: this.dbFields,
+		values: {
+			accountId: bpljs.crypto.getAddress(trs.senderPublicKey),
+			transactionId: trs.id,
+			isActive: true
+		}
+	};
 };
 
 //
