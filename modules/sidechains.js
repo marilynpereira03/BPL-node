@@ -1,51 +1,55 @@
 'use strict';
 
 var async = require('async');
+var JSONC = require('jsoncomp');
 var genesisblock = null;
 var Router = require('../helpers/router.js');
 var Sidechain = require('../logic/sidechain.js');
 var transactionTypes = require('../helpers/transactionTypes.js');
+var schema = require('../schema/sidechains.js');
+var sql = require('../sql/sidechains.js');
 
 // Private fields
 var modules, library, self,
-__private = {},
-shared = {};
+	__private = {},
+	shared = {};
 
 __private.assetTypes = {};
 
 // Constructor
-function SidechainContract (cb, scope) {
-    library = scope;
-    genesisblock = library.genesisblock;
-    self = this;
-    __private.assetTypes[transactionTypes.SIDECHAIN] = library.logic.transaction.attachAssetType(transactionTypes.SIDECHAIN, new Sidechain());
-    return cb(null, self);
+function Sidechains (cb, scope) {
+	library = scope;
+	genesisblock = library.genesisblock;
+	self = this;
+	__private.assetTypes[transactionTypes.SIDECHAIN] = library.logic.transaction.attachAssetType(transactionTypes.SIDECHAIN, new Sidechain());
+	return cb(null, self);
 }
 
 
 // Private methods
 __private.attachApi = function () {
-    var router = new Router();
+	var router = new Router();
 
-    router.use(function (req, res, next) {
-        if (modules) { return next(); }
-        res.status(500).send({success: false, error: 'Blockchain is loading'});
-    });
+	router.use(function (req, res, next) {
+		if (modules) { return next(); }
+		res.status(500).send({success: false, error: 'Blockchain is loading'});
+	});
 
-    router.map(shared, {
+	router.map(shared, {
+		'get /': 'getSidechains',
+		'get /get': 'getSidechain'
+	});
 
-    });
+	router.use(function (req, res, next) {
+		res.status(500).send({success: false, error: 'API endpoint not found'});
+	});
 
-    router.use(function (req, res, next) {
-        res.status(500).send({success: false, error: 'API endpoint not found'});
-    });
-
-    library.network.app.use('/api/sidechain', router);
-    library.network.app.use(function (err, req, res, next) {
-        if (!err) { return next(); }
-        library.logger.error(`API error ${  req.url}`, err);
-        res.status(500).send({success: false, error: 'API error', message: err.message});
-    });
+	library.network.app.use('/api/sidechains', router);
+	library.network.app.use(function (err, req, res, next) {
+		if (!err) { return next(); }
+		library.logger.error(`API error ${  req.url}`, err);
+		res.status(500).send({success: false, error: 'API error', message: err.message});
+	});
 };
 
 // Public methods
@@ -54,15 +58,15 @@ __private.attachApi = function () {
 //__API__ `verify`
 
 //
-SidechainContract.prototype.verify = function (transaction, cb) {
-    async.waterfall([
-        function setAccountAndGet (waterCb) {
-            modules.accounts.setAccountAndGet({publicKey: transaction.senderPublicKey}, waterCb);
-        },
-        function verifyTransaction (sender, waterCb) {
-            library.logic.transaction.verify(transaction, sender, waterCb);
-        }
-    ], cb);
+Sidechains.prototype.verify = function (transaction, cb) {
+	async.waterfall([
+		function setAccountAndGet (waterCb) {
+			modules.accounts.setAccountAndGet({publicKey: transaction.senderPublicKey}, waterCb);
+		},
+		function verifyTransaction (sender, waterCb) {
+			library.logic.transaction.verify(transaction, sender, waterCb);
+		}
+	], cb);
 };
 
 
@@ -70,79 +74,79 @@ SidechainContract.prototype.verify = function (transaction, cb) {
 //__API__ `apply`
 
 //
-SidechainContract.prototype.apply = function (transaction, block, cb) {
-    library.transactionSequence.add(function (sequenceCb) {
-        library.logger.debug('Applying confirmed transaction', transaction.id);
-        modules.accounts.getAccount({publicKey: transaction.senderPublicKey}, function (err, sender) {
-            if (err) {
-                return sequenceCb(err);
-            }
-            library.logic.transaction.apply(transaction, block, sender, sequenceCb);
-        });
-    }, cb);
+Sidechains.prototype.apply = function (transaction, block, cb) {
+	library.transactionSequence.add(function (sequenceCb) {
+		library.logger.debug('Applying confirmed transaction', transaction.id);
+		modules.accounts.getAccount({publicKey: transaction.senderPublicKey}, function (err, sender) {
+			if (err) {
+				return sequenceCb(err);
+			}
+			library.logic.transaction.apply(transaction, block, sender, sequenceCb);
+		});
+	}, cb);
 };
 
 //
 //__API__ `undo`
 
 //
-SidechainContract.prototype.undo = function (transaction, block, cb) {
-    library.transactionSequence.add(function (sequenceCb) {
-        library.logger.debug('Undoing confirmed transaction', transaction.id);
-        modules.accounts.getAccount({publicKey: transaction.senderPublicKey}, function (err, sender) {
-            if (err) {
-                return sequenceCb(err);
-            }
-            library.logic.transaction.undo(transaction, block, sender, sequenceCb);
-        });
-    }, cb);
+Sidechains.prototype.undo = function (transaction, block, cb) {
+	library.transactionSequence.add(function (sequenceCb) {
+		library.logger.debug('Undoing confirmed transaction', transaction.id);
+		modules.accounts.getAccount({publicKey: transaction.senderPublicKey}, function (err, sender) {
+			if (err) {
+				return sequenceCb(err);
+			}
+			library.logic.transaction.undo(transaction, block, sender, sequenceCb);
+		});
+	}, cb);
 };
 
 //
 //__API__ `applyUnconfirmed`
 
 //
-SidechainContract.prototype.applyUnconfirmed = function (transaction, cb) {
-    modules.accounts.setAccountAndGet({publicKey: transaction.senderPublicKey}, function (err, sender) {
-        if (!sender && transaction.blockId !== genesisblock.block.id) {
-            return cb('Invalid block id');
-        } else {
-            library.transactionSequence.add(function (sequenceCb) {
-                library.logger.debug('Applying unconfirmed transaction', transaction.id);
-                if (transaction.requesterPublicKey) {
-                    modules.accounts.getAccount({publicKey: transaction.requesterPublicKey}, function (err, requester) {
-                        if (err) {
-                            return sequenceCb(err);
-                        }
+Sidechains.prototype.applyUnconfirmed = function (transaction, cb) {
+	modules.accounts.setAccountAndGet({publicKey: transaction.senderPublicKey}, function (err, sender) {
+		if (!sender && transaction.blockId !== genesisblock.block.id) {
+			return cb('Invalid block id');
+		} else {
+			library.transactionSequence.add(function (sequenceCb) {
+				library.logger.debug('Applying unconfirmed transaction', transaction.id);
+				if (transaction.requesterPublicKey) {
+					modules.accounts.getAccount({publicKey: transaction.requesterPublicKey}, function (err, requester) {
+						if (err) {
+							return sequenceCb(err);
+						}
 
-                        if (!requester) {
-                            return sequenceCb('Requester not found');
-                        }
+						if (!requester) {
+							return sequenceCb('Requester not found');
+						}
 
-                        library.logic.transaction.applyUnconfirmed(transaction, sender, requester, sequenceCb);
-                    });
-                } else {
-                    library.logic.transaction.applyUnconfirmed(transaction, sender, sequenceCb);
-                }
-            }, cb);
-        }
-    });
+						library.logic.transaction.applyUnconfirmed(transaction, sender, requester, sequenceCb);
+					});
+				} else {
+					library.logic.transaction.applyUnconfirmed(transaction, sender, sequenceCb);
+				}
+			}, cb);
+		}
+	});
 };
 
 //
 //__API__ `undoUnconfirmed`
 
 //
-SidechainContract.prototype.undoUnconfirmed = function (transaction, cb) {
-    library.transactionSequence.add(function (sequenceCb) {
-        library.logger.debug('Undoing unconfirmed transaction', transaction.id);
-        modules.accounts.getAccount({publicKey: transaction.senderPublicKey}, function (err, sender) {
-            if (err) {
-                return sequenceCb(err);
-            }
-            library.logic.transaction.undoUnconfirmed(transaction, sender, sequenceCb);
-        });
-    }, cb);
+Sidechains.prototype.undoUnconfirmed = function (transaction, cb) {
+	library.transactionSequence.add(function (sequenceCb) {
+		library.logger.debug('Undoing unconfirmed transaction', transaction.id);
+		modules.accounts.getAccount({publicKey: transaction.senderPublicKey}, function (err, sender) {
+			if (err) {
+				return sequenceCb(err);
+			}
+			library.logic.transaction.undoUnconfirmed(transaction, sender, sequenceCb);
+		});
+	}, cb);
 };
 
 // Events
@@ -150,11 +154,11 @@ SidechainContract.prototype.undoUnconfirmed = function (transaction, cb) {
 //__EVENT__ `onBind`
 
 //
-SidechainContract.prototype.onBind = function (scope) {
-    modules = scope;
-    __private.assetTypes[transactionTypes.SIDECHAIN].bind({
-        modules, library
-    });
+Sidechains.prototype.onBind = function (scope) {
+	modules = scope;
+	__private.assetTypes[transactionTypes.SIDECHAIN].bind({
+		modules, library
+	});
 };
 
 
@@ -162,16 +166,68 @@ SidechainContract.prototype.onBind = function (scope) {
 //__EVENT__ `onAttachPublicApi`
 
 //
-SidechainContract.prototype.onAttachPublicApi = function () {
-    __private.attachApi();
+Sidechains.prototype.onAttachPublicApi = function () {
+	__private.attachApi();
 };
 
-//
-//__EVENT__ `onPeersReady`
 
-//
-SidechainContract.prototype.onPeersReady = function () {
+// Shared
+shared.getSidechains = function (req, cb) {
+	library.schema.validate(req.body, schema.getSidechains, function (err) {
+		if (err) {
+			return cb(err[0].message);
+		}
+		library.db.query(sql.getByPublicKey, {publicKey: req.body.publicKey}).then(function (rows) {
+			if (!rows.length) {
+				return cb('Sidechains not found: ' +req.body.publicKey);
+			}
+
+			var sidechains = [];
+			rows.forEach(function (row) {
+				var rawasset = JSON.parse(row.rawasset);
+
+				var sidechain = {
+					'config': rawasset.config,
+					'constants': rawasset.constants,
+					'genesis': JSONC.decompress(rawasset.genesis),
+					'networks': rawasset.networks
+				};
+				sidechains.push(sidechain);
+			});
+			return cb(null,  {'sidechains': sidechains});
+		}).catch(function (err) {
+			library.logger.error('stack', err);
+			return cb('Sidechains#getByPublicKey error');
+		});
+	});
+};
+
+shared.getSidechain = function (req, cb) {
+	library.schema.validate(req.body, schema.getSidechain, function (err) {
+		if (err) {
+			return cb(err[0].message);
+		}
+
+		library.db.query(sql.getByTicker, {ticker: req.body.ticker}).then(function (rows) {
+			if (!rows.length) {
+				return cb('Sidechain not found: ' +req.body.ticker);
+			}
+			var rawasset = JSON.parse(rows[0].rawasset);
+
+			return cb(null,  {
+				'sidechain': {
+					'config': rawasset.config,
+					'constants': rawasset.constants,
+					'genesis': JSONC.decompress(rawasset.genesis),
+					'networks': rawasset.networks
+				}
+			});
+		}).catch(function (err) {
+			library.logger.error('stack', err);
+			return cb('Sidechains#getByTicker error');
+		});
+	});
 };
 
 // Export
-module.exports = SidechainContract;
+module.exports = Sidechains;

@@ -72,7 +72,8 @@ CREATE TABLE IF NOT EXISTS "mem_accounts2u_multisignatures"(
 
 CREATE TABLE IF NOT EXISTS "sidechain"(
   "ticker" VARCHAR(6) PRIMARY KEY,
-  "transactionId" VARCHAR(64) NOT NULL
+  "transactionId" VARCHAR(64) NOT NULL,
+  "publicKey" bytea NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS "smart_contract"(

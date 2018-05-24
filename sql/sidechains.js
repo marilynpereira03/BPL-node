@@ -1,8 +1,13 @@
 'use strict';
 
-var sidechainSql = {
-  updateTransactionId: 'UPDATE sidechain SET "transactionId" = ${transactionId} where "ticker" = ${ticker};',
-  getSidechain: 'SELECT COUNT(*)::int FROM sidechain WHERE "ticker" = ${ticker};',
+var SidechainSql = {
+	updateTransactionId: 'UPDATE sidechain SET "transactionId" = ${transactionId} where "ticker" = ${ticker};',
+
+	countByTicker: 'SELECT COUNT(*)::int FROM sidechain WHERE "ticker" = ${ticker};',
+
+	getByTicker: 'SELECT rawasset FROM transactions WHERE "id" = (SELECT "transactionId" FROM sidechain WHERE "ticker" = ${ticker});',
+
+	getByPublicKey: 'SELECT rawasset FROM transactions WHERE "id" IN (SELECT "transactionId" FROM sidechain WHERE "publicKey" = ${publicKey});'
 };
 
-module.exports = sidechainSql;
+module.exports = SidechainSql;

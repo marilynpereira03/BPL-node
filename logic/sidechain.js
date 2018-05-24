@@ -107,7 +107,7 @@ Sidechain.prototype.verify = function (trs, sender, cb) {
 	}
 	if(!trs.asset.prevTransactionId)
 	{
-	  library.db.query(sql.getSidechain,{ticker:trs.asset.networks.tokenShortName}).then(function (rows) {
+	  library.db.query(sql.countByTicker, {ticker: trs.asset.networks.tokenShortName}).then(function (rows) {
 			if(rows[0].count) {
 				return cb('Sidechain ticker name already exist.');
 			}
@@ -204,7 +204,8 @@ Sidechain.prototype.dbTable = 'sidechain';
 
 Sidechain.prototype.dbFields = [
 	'ticker',
-	'transactionId'
+	'transactionId',
+	'publicKey'
 ];
 Sidechain.prototype.dbSave = function (trs) {
 	if(!trs.asset.prevTransactionId)
@@ -214,13 +215,14 @@ Sidechain.prototype.dbSave = function (trs) {
 			fields: this.dbFields,
 			values: {
 				ticker: trs.asset.networks.tokenShortName,
-				transactionId: trs.id
+				transactionId: trs.id,
+				publicKey: trs.senderPublicKey
 			}
 		};
 	}
   else
 	{
-	library.db.query(sql.updateTransactionId,{ticker:trs.asset.networks.tokenShortName,transactionId:trs.id});
+		library.db.query(sql.updateTransactionId,{ticker: trs.asset.networks.tokenShortName, transactionId: trs.id});
 	}
 };
 
