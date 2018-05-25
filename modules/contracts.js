@@ -2,14 +2,11 @@
 
 var async = require('async');
 var genesisblock = null;
-var Router = require('../helpers/router.js');
 var Contract = require('../logic/contract.js');
 var transactionTypes = require('../helpers/transactionTypes.js');
 
 // Private fields
-var modules, library, self,
-	__private = {},
-	shared = {};
+var modules, library, self, __private = {};
 
 __private.assetTypes = {};
 
@@ -22,31 +19,6 @@ function Contracts (cb, scope) {
 	return cb(null, self);
 }
 
-
-// Private methods
-__private.attachApi = function () {
-	var router = new Router();
-
-	router.use(function (req, res, next) {
-		if (modules) { return next(); }
-		res.status(500).send({success: false, error: 'Blockchain is loading'});
-	});
-
-	router.map(shared, {
-
-	});
-
-	router.use(function (req, res, next) {
-		res.status(500).send({success: false, error: 'API endpoint not found'});
-	});
-
-	library.network.app.use('/api/transactions', router);
-	library.network.app.use(function (err, req, res, next) {
-		if (!err) { return next(); }
-		library.logger.error(`API error ${  req.url}`, err);
-		res.status(500).send({success: false, error: 'API error', message: err.message});
-	});
-};
 
 // Public methods
 
@@ -155,22 +127,6 @@ Contracts.prototype.onBind = function (scope) {
 	__private.assetTypes[transactionTypes.CONTRACT].bind({
 		modules, library
 	});
-};
-
-
-//
-//__EVENT__ `onAttachPublicApi`
-
-//
-Contracts.prototype.onAttachPublicApi = function () {
-	__private.attachApi();
-};
-
-//
-//__EVENT__ `onPeersReady`
-
-//
-Contracts.prototype.onPeersReady = function () {
 };
 
 // Export

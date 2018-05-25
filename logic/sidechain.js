@@ -42,77 +42,81 @@ Sidechain.prototype.calculateFee = function (trs) {
 
 //
 Sidechain.prototype.verify = function (trs, sender, cb) {
-	if(!trs.asset) {
+	if(!trs.asset || !trs.asset.sidechain) {
 		return cb('Invalid transaction asset.');
 	}
-	if(!trs.asset.config) {
+	if(!trs.asset.sidechain.config) {
 		return cb('Invalid asset config. Must be an object.');
 	}
-	if(!trs.asset.constants) {
+	if(!trs.asset.sidechain.constants) {
 		return cb('Invalid constants asset.');
 	}
-	if (!trs.asset.constants.activeDelegates) {
+	if (!trs.asset.sidechain.constants.activeDelegates) {
 		return cb('Active delegates must not be empty.');
 	}
-	if (!trs.asset.constants.blockTime) {
+	if (!trs.asset.sidechain.constants.blockTime) {
 		return cb('Block Time must not be empty');
 	}
-	if(!trs.asset.constants.rewards) {
+	if(!trs.asset.sidechain.constants.rewards) {
 		return cb('Invalid rewards asset.');
 	}
-	if (!trs.asset.constants.rewards.milestones || !trs.asset.constants.rewards.milestones.length) {
+	if (!trs.asset.sidechain.constants.rewards.milestones || !trs.asset.sidechain.constants.rewards.milestones.length) {
 		return cb('Invalid milestones asset.');
 	}
-	if (!(trs.asset.constants.rewards.type != 'proportional' || trs.asset.constants.rewards.type != 'static')) {
+	if (!(trs.asset.sidechain.constants.rewards.type != 'proportional' || trs.asset.sidechain.constants.rewards.type != 'static')) {
 		return cb('Reward type must be static or proportional.');
 	}
-	if (!trs.asset.constants.rewards.offset) {
+	if (!trs.asset.sidechain.constants.rewards.offset) {
 		return cb('Invalid reward offset.');
 	}
-	if (!trs.asset.constants.rewards.distance) {
+	if (!trs.asset.sidechain.constants.rewards.distance) {
 		return cb('Invalid reward distance.');
 	}
-	if (!trs.asset.constants.totalAmount) {
+	if (!trs.asset.sidechain.constants.totalAmount) {
 		return cb('Invalid total amount.');
 	}
-	if (!trs.asset.genesis) {
+	if (!trs.asset.sidechain.genesis) {
 		return cb('Invalid genesis object.');
 	}
-	if (!trs.asset.status) {
+	if (!trs.asset.sidechain.status) {
 		return cb('Invalid transaction status.');
 	}
-	if (!trs.asset.config.peersList) {
+	if (!trs.asset.sidechain.config.peersList) {
 		return cb('Invalid peers asset.');
 	}
-	if (!trs.asset.config.nethash) {
+	if (!trs.asset.sidechain.config.nethash) {
 		return cb('Invalid nethash.');
 	}
-	if (!trs.asset.networks) {
-		return cb('Invalid networks.');
+	if (!trs.asset.sidechain.network) {
+		return cb('Invalid network.');
 	}
-	if (!trs.asset.networks.token) {
+	if (!trs.asset.sidechain.network.token) {
 		return cb('Invalid token name.');
 	}
-	if (!trs.asset.networks.tokenShortName || !trs.asset.networks.tokenShortName.length) {
+	if (!trs.asset.sidechain.network.tokenShortName || !trs.asset.sidechain.network.tokenShortName.length) {
 		return cb('Invalid token short name.');
 	}
-	if (!trs.asset.networks.pubKeyHash) {
+	if (!trs.asset.sidechain.network.pubKeyHash) {
 		return cb('Invalid pubKeyHash.');
 	}
-	if (!trs.asset.networks.symbol) {
+	if (!trs.asset.sidechain.network.symbol) {
 		return cb('Invalid symbol name.');
 	}
-	if (!trs.asset.networks.explorer) {
+	if (!trs.asset.sidechain.network.explorer) {
 		return cb('Invalid explorer link.');
 	}
-	if(!trs.asset.prevTransactionId)
+	if(!trs.asset.sidechain.prevTransactionId)
 	{
-		library.db.query(sql.countByTicker, {ticker: trs.asset.networks.tokenShortName}).then(function (rows) {
+		library.db.query(sql.countByTicker, {ticker: trs.asset.sidechain.network.tokenShortName}).then(function (rows) {
 			if(rows[0].count) {
 				return cb('Sidechain ticker name already exist.');
 			}
 		});
 	}
+	if (!trs.asset.sidechain.status) {
+		return cb('Invalid status.');
+	}
+
 	return cb(null, trs);
 };
 
@@ -200,7 +204,7 @@ Sidechain.prototype.dbRead = function (raw) {
 //__API__ `dbSave`
 
 //
-Sidechain.prototype.dbTable = 'sidechain';
+Sidechain.prototype.dbTable = 'sidechains';
 
 Sidechain.prototype.dbFields = [
 	'ticker',
@@ -208,13 +212,13 @@ Sidechain.prototype.dbFields = [
 	'publicKey'
 ];
 Sidechain.prototype.dbSave = function (trs) {
-	if(!trs.asset.prevTransactionId)
+	if(!trs.asset.sidechain.prevTransactionId)
 	{
 		return {
 			table: this.dbTable,
 			fields: this.dbFields,
 			values: {
-				ticker: trs.asset.networks.tokenShortName,
+				ticker: trs.asset.sidechain.network.tokenShortName,
 				transactionId: trs.id,
 				publicKey: trs.senderPublicKey
 			}
@@ -222,7 +226,7 @@ Sidechain.prototype.dbSave = function (trs) {
 	}
 	else
 	{
-		library.db.query(sql.updateTransactionId,{ticker: trs.asset.networks.tokenShortName, transactionId: trs.id});
+		library.db.query(sql.updateTransactionId,{ticker: trs.asset.sidechain.network.tokenShortName, transactionId: trs.id});
 	}
 };
 

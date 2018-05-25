@@ -187,10 +187,10 @@ shared.getSidechains = function (req, cb) {
 				var rawasset = JSON.parse(row.rawasset);
 
 				var sidechain = {
-					'config': rawasset.config,
-					'constants': rawasset.constants,
-					'genesis': JSONC.decompress(rawasset.genesis),
-					'networks': rawasset.networks
+					'config': rawasset.sidechain.config,
+					'constants': rawasset.sidechain.constants,
+					'genesis': JSONC.decompress(rawasset.sidechain.genesis),
+					'network': rawasset.sidechain.network
 				};
 				sidechains.push(sidechain);
 			});
@@ -212,14 +212,14 @@ shared.getSidechain = function (req, cb) {
 			if (!rows.length) {
 				return cb('Sidechain not found: ' +req.body.ticker);
 			}
-			var rawasset = JSON.parse(rows[0].rawasset);
 
+			var rawasset = JSON.parse(rows[0].rawasset);
 			return cb(null,  {
 				'sidechain': {
-					'config': rawasset.config,
-					'constants': rawasset.constants,
-					'genesis': JSONC.decompress(rawasset.genesis),
-					'networks': rawasset.networks
+					'config': rawasset.sidechain.config,
+					'constants': rawasset.sidechain.constants,
+					'genesis': JSONC.decompress(rawasset.sidechain.genesis),
+					'network': rawasset.sidechain.network
 				}
 			});
 		}).catch(function (err) {

@@ -3,7 +3,7 @@
 var constants = require('../constants.json');
 var bpljs = require('bpljs');
 // Private fields
-var modules, library;
+var modules;
 
 // Constructor
 function Contract () {}
@@ -15,7 +15,6 @@ function Contract () {}
 //
 Contract.prototype.bind = function (scope) {
 	modules = scope.modules;
-	library = scope.library;
 };
 
 //
@@ -25,7 +24,7 @@ Contract.prototype.bind = function (scope) {
 Contract.prototype.create = function (data, trs) {
 	trs.recipientId = null;
 	trs.amount = 0;
-	trs.asset.smartContract.type = data.type;
+	trs.asset.contract.type = data.type;
 	return trs;
 };
 
@@ -42,22 +41,22 @@ Contract.prototype.calculateFee = function (trs) {
 
 //
 Contract.prototype.verify = function (trs, sender, cb) {
-	if (!trs.asset || !trs.asset.smartContract) {
+	if (!trs.asset || !trs.asset.contract) {
 		return cb('Smart contract object is undefined.');
 	}
-	if (!trs.asset.smartContract.type.length) {
+	if (!trs.asset.contract.type.length) {
 		return cb('Invalid Smart Contract type. Must not be empty');
 	}
-	if (!trs.asset.smartContract.cause) {
+	if (!trs.asset.contract.cause) {
 		return cb('Invalid cause asset.');
 	}
-	if (!trs.asset.smartContract.cause.address) {
+	if (!trs.asset.contract.cause.address) {
 		return cb('Invalid account address.');
 	}
-	if (!trs.asset.smartContract.cause.minConfirmations) {
+	if (!trs.asset.contract.cause.minConfirmations) {
 		return cb('Invalid minimum number of confirmations.');
 	}
-	if (!trs.asset.smartContract.effect) {
+	if (!trs.asset.contract.effect) {
 		return cb('Invalid cause asset.');
 	}
 	return cb(null, trs);
@@ -77,9 +76,9 @@ Contract.prototype.process = function (trs, sender, cb) {
 //ToDo
 Contract.prototype.getBytes = function (trs) {
 	var buf;
-	if(trs.asset.smartContract.type)
+	if(trs.asset.contract.type)
 	{
-		buf = new Buffer(trs.asset.smartContract.type, 'utf8');
+		buf = new Buffer(trs.asset.contract.type, 'utf8');
 	}
 	else {
 		return null;
@@ -155,7 +154,7 @@ Contract.prototype.dbRead = function (raw) {
 //__API__ `dbSave`
 
 //
-Contract.prototype.dbTable = 'smart_contract';
+Contract.prototype.dbTable = 'contracts';
 
 Contract.prototype.dbFields = [
 	'accountId',
