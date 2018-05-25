@@ -133,7 +133,16 @@ Sidechain.prototype.process = function (trs, sender, cb) {
 
 //ToDo
 Sidechain.prototype.getBytes = function (trs) {
-	return null;
+	var buf;
+	if(trs.asset.sidechain.network.tokenShortName)
+	{
+		buf = new Buffer(trs.asset.sidechain.network.tokenShortName, 'utf8');
+	}
+	else {
+		return null;
+	}
+	return buf;
+
 };
 
 //

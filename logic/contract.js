@@ -45,19 +45,19 @@ Contract.prototype.verify = function (trs, sender, cb) {
 		return cb('Smart contract object is undefined.');
 	}
 	if (!trs.asset.contract.type.length) {
-		return cb('Invalid Smart Contract type. Must not be empty');
+		return cb('Invalid Smart Contract type. Must not be empty.');
 	}
 	if (!trs.asset.contract.cause) {
 		return cb('Invalid cause asset.');
 	}
 	if (!trs.asset.contract.cause.address) {
-		return cb('Invalid account address.');
+		return cb('Invalid account address. Must not be empty.');
 	}
 	if (!trs.asset.contract.cause.minConfirmations) {
 		return cb('Invalid minimum number of confirmations.');
 	}
 	if (!trs.asset.contract.effect) {
-		return cb('Invalid cause asset.');
+		return cb('Invalid effect asset.');
 	}
 	return cb(null, trs);
 };
