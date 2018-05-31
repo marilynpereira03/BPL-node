@@ -13,9 +13,8 @@ function Contract () {}
 // Private menthods
 __private.validation = function (type, cause, effect) {
 	var type = ''+type;
-	console.log('>>>>>>>>>>>>>>>>>>. in validation',type,contractTypes[type]);
+
 	if(contractTypes[type]) {
-		console.log('>>>>>>>>>>>>>>>>. if');
 		var causeProps = contractTypes[type].cause;
 		var effectProps = contractTypes[type].effect;
 
@@ -31,7 +30,7 @@ __private.validation = function (type, cause, effect) {
 
 		return null;
 	}
-	return 'Invalid type asset 2.';
+	return 'Invalid type asset.';
 };
 
 // Public methods
@@ -68,7 +67,6 @@ Contract.prototype.calculateFee = function (trs) {
 
 //
 Contract.prototype.verify = function (trs, sender, cb) {
-	console.log('>>>>>>>>>>>>>>>>>>>>> ',trs.asset);
 	if (!trs.asset || !trs.asset.contract) {
 		return cb('Invalid transaction asset.');
 	}
@@ -86,7 +84,7 @@ Contract.prototype.verify = function (trs, sender, cb) {
 	if(msg) {
 		return cb(msg)
 	}
-	console.log('>>>>>>>>>>>>>> end');
+
 	return cb(null, trs);
 };
 
