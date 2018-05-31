@@ -5,13 +5,16 @@ module.exports = {
 		id: 'sidechains.getSidechain',
 		type: 'object',
 		properties: {
+			id: {
+				type: 'string',
+				minLength: 1
+			},
 			ticker: {
 				type: 'string',
 				minLength: 3,
 				maxLength: 6
 			}
-		},
-		required: ['ticker']
+		}
 	},
 	getSidechains: {
 		id: 'sidechains.getSidechains',
@@ -23,5 +26,20 @@ module.exports = {
 			}
 		},
 		required: ['publicKey']
+	},
+	getHistory: {
+		id: 'sidechains.getHistory',
+		type: 'object',
+		properties: {
+			id: {
+				type: 'string',
+				minLength: 1
+			},
+			ticker: {
+				type: 'string',
+				minLength: 3,
+				maxLength: 6
+			}
+		}
 	}
 };

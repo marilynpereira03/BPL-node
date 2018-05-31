@@ -8,11 +8,10 @@ var Sidechain = require('../logic/sidechain.js');
 var transactionTypes = require('../helpers/transactionTypes.js');
 var schema = require('../schema/sidechains.js');
 var sql = require('../sql/sidechains.js');
+var tsql = require('../sql/transactions.js');
 
 // Private fields
-var modules, library, self,
-	__private = {},
-	shared = {};
+var modules, library, self, __private = {}, shared = {};
 
 __private.assetTypes = {};
 
@@ -37,7 +36,8 @@ __private.attachApi = function () {
 
 	router.map(shared, {
 		'get /': 'getSidechains',
-		'get /get': 'getSidechain'
+		'get /get': 'getSidechain',
+		'get /history': 'getSidechainHistory'
 	});
 
 	router.use(function (req, res, next) {
@@ -177,6 +177,7 @@ shared.getSidechains = function (req, cb) {
 		if (err) {
 			return cb(err[0].message);
 		}
+
 		library.db.query(sql.getByPublicKey, {publicKey: req.body.publicKey}).then(function (rows) {
 			if (!rows.length) {
 				return cb('Sidechains not found: ' +req.body.publicKey);
@@ -185,15 +186,17 @@ shared.getSidechains = function (req, cb) {
 			var sidechains = [];
 			rows.forEach(function (row) {
 				var rawasset = JSON.parse(row.rawasset);
-
 				var sidechain = {
 					'config': rawasset.sidechain.config,
 					'constants': rawasset.sidechain.constants,
 					'genesis': JSONC.decompress(rawasset.sidechain.genesis),
-					'network': rawasset.sidechain.network
+					'network': rawasset.sidechain.network,
+					'status': rawasset.sidechain.status
 				};
+
 				sidechains.push(sidechain);
 			});
+
 			return cb(null,  {'sidechains': sidechains});
 		}).catch(function (err) {
 			library.logger.error('stack', err);
@@ -208,9 +211,24 @@ shared.getSidechain = function (req, cb) {
 			return cb(err[0].message);
 		}
 
-		library.db.query(sql.getByTicker, {ticker: req.body.ticker}).then(function (rows) {
+		var query = '', params = {}, errMsg = '';
+		if(req.body.id) {
+			query = tsql.getRawAssetById;
+			params = {id: req.body.id};
+			errMsg = 'Sidechain not found: ' +req.body.id;
+		}
+		else if(req.body.ticker) {
+			query = sql.getByTicker;
+			params = {ticker: req.body.ticker};
+			errMsg = 'Sidechain not found: ' +req.body.ticker;
+		}
+		else {
+			return cb(null, {success: false, error: 'Missing required property: id or ticker'});
+		}
+
+		library.db.query(query, params).then(function (rows) {
 			if (!rows.length) {
-				return cb('Sidechain not found: ' +req.body.ticker);
+				return cb(errMsg);
 			}
 
 			var rawasset = JSON.parse(rows[0].rawasset);
@@ -219,15 +237,102 @@ shared.getSidechain = function (req, cb) {
 					'config': rawasset.sidechain.config,
 					'constants': rawasset.sidechain.constants,
 					'genesis': JSONC.decompress(rawasset.sidechain.genesis),
-					'network': rawasset.sidechain.network
+					'network': rawasset.sidechain.network,
+					'status': rawasset.sidechain.status
 				}
 			});
 		}).catch(function (err) {
 			library.logger.error('stack', err);
-			return cb('Sidechains#getByTicker error');
+			return cb('Sidechains#get error');
 		});
 	});
 };
+
+// __private.getPrevTransaction = function (prevTransactionId, cb) {
+// 	library.db.query(sql.getById, {id: prevTransactionId}).then(function (rows) {
+// 		if (!rows.length) {
+// 			return cb('Sidechain history not found');
+// 		}
+// 		var rawasset = JSON.parse(rows[0].rawasset);
+// 		var sidechain = {
+// 			'config': rawasset.sidechain.config,
+// 			'constants': rawasset.sidechain.constants,
+// 			'genesis': JSONC.decompress(rawasset.sidechain.genesis),
+// 			'network': rawasset.sidechain.network,
+// 			'status': rawasset.sidechain.status
+// 		};
+// 		console.log('>>>>>>>>>>>> 2');
+// 		return cb(null, sidechain);
+// 	}).catch(function (err) {
+// 		library.logger.error('stack', err);
+// 		return cb('Sidechains#get123 error');
+// 	});
+// };
+//
+// shared.getSidechainHistory = function(req, cb) {
+// 	library.schema.validate(req.body, schema.getHistory, function (err) {
+// 		if (err) {
+// 			return cb(err[0].message);
+// 		}
+//
+// 		var query = '', params = {}, errMsg = '';
+// 		if(req.body.id) {
+// 			query = sql.getById;
+// 			params = {id: req.body.id};
+// 			errMsg = 'Sidechain history not found: ' +req.body.id;
+// 		}
+// 		else if(req.body.ticker) {
+// 			query = sql.getByTicker;
+// 			params = {ticker: req.body.ticker};
+// 			errMsg = 'Sidechain history not found: ' +req.body.ticker;
+// 		}
+// 		else {
+// 			return cb(null, {success: false, error: 'Missing required property: id or ticker'});
+// 		}
+//
+// 		library.db.query(query, params).then(function (rows) {
+// 			if (!rows.length) {
+// 				return cb(errMsg);
+// 			}
+//
+// 			var history = [];
+// 			var rawasset = JSON.parse(rows[0].rawasset);
+//
+// 			var sidechain = {
+// 				'config': rawasset.sidechain.config,
+// 				'constants': rawasset.sidechain.constants,
+// 				'genesis': JSONC.decompress(rawasset.sidechain.genesis),
+// 				'network': rawasset.sidechain.network,
+// 				'status': rawasset.sidechain.status
+// 			};
+// 			history.push(sidechain);
+//
+// 			if(rawasset.sidechain.prevTransactionId) {
+// 				console.log('>>>>>>>>>>>>> 1');
+// 				__private.getPrevTransaction(rawasset.sidechain.prevTransactionId, function(err, res) {
+// 					console.log('>>>>>>>>>>>>>> 3');
+// 					if(err) {
+// 						console.log('>???????????D');
+// 					}
+//
+// 					sidechain = {
+// 						'config': res.config,
+// 						'constants': res.constants,
+// 						'genesis': res.genesis,
+// 						'network': res.network,
+// 						'status': res.status
+// 					};
+// 					history.push(sidechain);
+// 					return cb(null, history);
+// 				});
+// 			}
+// 			return cb(null, history);
+// 		}).catch(function (err) {
+// 			library.logger.error('stack', err);
+// 			return cb('Sidechains#get error');
+// 		});
+// 	});
+// };
 
 // Export
 module.exports = Sidechains;

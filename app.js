@@ -98,7 +98,7 @@ var config = {
 		nodeManager: './modules/nodeManager.js',
 		blockRewards: './modules/blockRewards.js',
 		contracts: './modules/contracts.js',
-		sidechain: './modules/sidechains.js'
+		sidechains: './modules/sidechains.js'
 	}
 };
 

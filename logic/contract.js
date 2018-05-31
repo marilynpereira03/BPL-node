@@ -158,6 +158,7 @@ Contract.prototype.dbTable = 'contracts';
 
 Contract.prototype.dbFields = [
 	'accountId',
+	'publicKey',
 	'transactionId',
 	'isActive'
 ];
@@ -166,7 +167,8 @@ Contract.prototype.dbSave = function (trs) {
 		table: this.dbTable,
 		fields: this.dbFields,
 		values: {
-			accountId: bpljs.crypto.getAddress(trs.senderPublicKey),
+			accountId: trs.asset.contract.cause.address,
+			publicKey: trs.senderPublicKey,
 			transactionId: trs.id,
 			isActive: true
 		}

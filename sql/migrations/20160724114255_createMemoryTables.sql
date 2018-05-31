@@ -72,12 +72,13 @@ CREATE TABLE IF NOT EXISTS "mem_accounts2u_multisignatures"(
 
 CREATE TABLE IF NOT EXISTS "sidechains"(
   "ticker" VARCHAR(6) PRIMARY KEY,
-  "transactionId" VARCHAR(64) NOT NULL,
-  "publicKey" bytea NOT NULL
+  "publicKey" bytea NOT NULL,
+  "transactionId" VARCHAR(64) NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS "contracts"(
   "accountId" VARCHAR(36) NOT NULL,
+  "publicKey" bytea NOT NULL,
   "transactionId" VARCHAR(64) NOT NULL,
   "isActive" VARCHAR(5) NOT NULL
 );

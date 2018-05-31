@@ -2,11 +2,15 @@
 
 var async = require('async');
 var genesisblock = null;
+var Router = require('../helpers/router.js');
 var Contract = require('../logic/contract.js');
 var transactionTypes = require('../helpers/transactionTypes.js');
+var schema = require('../schema/contracts.js');
+var sql = require('../sql/contracts.js');
+var tsql = require('../sql/transactions.js')
 
 // Private fields
-var modules, library, self, __private = {};
+var modules, library, self, __private = {}, shared = {};
 
 __private.assetTypes = {};
 
@@ -19,6 +23,31 @@ function Contracts (cb, scope) {
 	return cb(null, self);
 }
 
+// Private methods
+__private.attachApi = function () {
+	var router = new Router();
+
+	router.use(function (req, res, next) {
+		if (modules) { return next(); }
+		res.status(500).send({success: false, error: 'Blockchain is loading'});
+	});
+
+	router.map(shared, {
+		'get /': 'getContracts',
+		'get /get': 'getContract'
+	});
+
+	router.use(function (req, res, next) {
+		res.status(500).send({success: false, error: 'API endpoint not found'});
+	});
+
+	library.network.app.use('/api/contracts', router);
+	library.network.app.use(function (err, req, res, next) {
+		if (!err) { return next(); }
+		library.logger.error(`API error ${  req.url}`, err);
+		res.status(500).send({success: false, error: 'API error', message: err.message});
+	});
+};
 
 // Public methods
 
@@ -128,6 +157,86 @@ Contracts.prototype.onBind = function (scope) {
 		modules, library
 	});
 };
+
+
+//__EVENT__ `onAttachPublicApi`
+
+Contracts.prototype.onAttachPublicApi = function () {
+	__private.attachApi();
+};
+
+// Shared
+shared.getContracts = function (req, cb) {
+	library.schema.validate(req.body, schema.getContracts, function (err) {
+		if (err) {
+			return cb(err[0].message);
+		}
+
+		var query = '', params = {}, errMsg = '';
+		if(req.body.publicKey) {
+			query = sql.getByPublicKey;
+			params = {publicKey: req.body.publicKey};
+			errMsg = 'Contracts not found: ' +req.body.publicKey;
+		}
+		else if(req.body.address) {
+			query = sql.getByAddress;
+			params = {address: req.body.address};
+			errMsg = 'Contracts not found: ' +req.body.address;
+		}
+		else {
+			return cb(null, {success: false, error: 'Missing required property: address or publicKey'});
+		}
+
+		library.db.query(query, params).then(function (rows) {
+			if (!rows.length) {
+				return cb(errMsg);
+			}
+
+			var contracts = [];
+			rows.forEach(function (row) {
+				var rawasset = JSON.parse(row.rawasset);
+				var contract = {
+					'cause': rawasset.contract.cause,
+					'effect': rawasset.contract.effect
+				};
+
+				contracts.push(contract);
+			});
+
+			return cb(null,  {'contracts': contracts});
+		}).catch(function (err) {
+			library.logger.error('stack', err);
+			return cb('Contracts#getByPublicKey error');
+		});
+	});
+};
+
+
+shared.getContract = function (req, cb) {
+	library.schema.validate(req.body, schema.getContract, function (err) {
+		if (err) {
+			return cb(err[0].message);
+		}
+
+		library.db.query(tsql.getRawAssetById, {id: req.body.id}).then(function (rows) {
+			if (!rows.length) {
+				return cb('Contract not found: ' +req.body.id);
+			}
+
+			var rawasset = JSON.parse(rows[0].rawasset);
+			return cb(null,  {
+				'contract': {
+					'cause': rawasset.contract.cause,
+					'effect': rawasset.contract.effect
+				}
+			});
+		}).catch(function (err) {
+			library.logger.error('stack', err);
+			return cb('Contracts#get error');
+		});
+	});
+};
+
 
 // Export
 module.exports = Contracts;
