@@ -1,12 +1,38 @@
 'use strict';
 
 var constants = require('../constants.json');
+var contractTypes = require('../helpers/contractTypes.js');
 var bpljs = require('bpljs');
+
 // Private fields
-var modules;
+var modules, __private = {};
 
 // Constructor
 function Contract () {}
+
+// Private menthods
+__private.validation = function (type, cause, effect) {
+	var type = ''+type;
+	console.log('>>>>>>>>>>>>>>>>>>. in validation',type,contractTypes[type]);
+	if(contractTypes[type]) {
+		console.log('>>>>>>>>>>>>>>>>. if');
+		var causeProps = contractTypes[type].cause;
+		var effectProps = contractTypes[type].effect;
+
+		for(var i=0; i<causeProps.length; i++) {
+			if(!cause[causeProps[i]])
+				return 'Invalid '+causeProps[i]+' asset.';
+		}
+
+		for(var i=0; i<effectProps.length; i++) {
+			if(!effect[effectProps[i]])
+				return 'Invalid '+effectProps[i]+' asset.';
+		}
+
+		return null;
+	}
+	return 'Invalid type asset 2.';
+};
 
 // Public methods
 //
@@ -36,29 +62,31 @@ Contract.prototype.calculateFee = function (trs) {
 	return constants.fees.contract;
 };
 
+
 //
 //__API__ `verify`
 
 //
 Contract.prototype.verify = function (trs, sender, cb) {
+	console.log('>>>>>>>>>>>>>>>>>>>>> ',trs.asset);
 	if (!trs.asset || !trs.asset.contract) {
-		return cb('Smart contract object is undefined.');
+		return cb('Invalid transaction asset.');
 	}
-	if (!trs.asset.contract.type.length) {
-		return cb('Invalid Smart Contract type. Must not be empty.');
+	if (!trs.asset.contract.type) {
+		return cb('Invalid type asset 1.');
 	}
 	if (!trs.asset.contract.cause) {
 		return cb('Invalid cause asset.');
 	}
-	if (!trs.asset.contract.cause.address) {
-		return cb('Invalid account address. Must not be empty.');
-	}
-	if (!trs.asset.contract.cause.minConfirmations) {
-		return cb('Invalid minimum number of confirmations.');
-	}
 	if (!trs.asset.contract.effect) {
 		return cb('Invalid effect asset.');
 	}
+
+	var msg = __private.validation(trs.asset.contract.type, trs.asset.contract.cause, trs.asset.contract.effect);
+	if(msg) {
+		return cb(msg)
+	}
+	console.log('>>>>>>>>>>>>>> end');
 	return cb(null, trs);
 };
 
@@ -75,15 +103,16 @@ Contract.prototype.process = function (trs, sender, cb) {
 
 //ToDo
 Contract.prototype.getBytes = function (trs) {
-	var buf;
-	if(trs.asset.contract.type)
-	{
-		buf = new Buffer(trs.asset.contract.type, 'utf8');
-	}
-	else {
-		return null;
-	}
-	return buf;
+	// var buf;
+	// if(trs.asset.contract.type)
+	// {
+	// 	buf = new Buffer(trs.asset.contract.type, 'utf8');
+	// }
+	// else {
+	// 	return null;
+	// }
+	// return buf;
+	return null;
 };
 
 //
