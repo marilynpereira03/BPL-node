@@ -34,7 +34,8 @@ __private.attachApi = function () {
 
 	router.map(shared, {
 		'get /': 'getContracts',
-		'get /get': 'getContract'
+		'get /get': 'getContract',
+		'get /history': 'getHistory'
 	});
 
 	router.use(function (req, res, next) {
@@ -47,6 +48,38 @@ __private.attachApi = function () {
 		library.logger.error(`API error ${  req.url}`, err);
 		res.status(500).send({success: false, error: 'API error', message: err.message});
 	});
+};
+
+
+__private.getHistory = function (transactionId, limit, history, cb) {
+	if(history.length < limit) {
+		library.db.query(tsql.getRawAssetById, {id: transactionId}).then(function (rows) {
+			if (!rows.length) {
+				return cb('Contract history not found.');
+			}
+			var rawasset = JSON.parse(rows[0].rawasset);
+			var contract = {
+				'type': rawasset.contract.type,
+				'label': rawasset.contract.label,
+				'cause': rawasset.contract.cause,
+				'effect': rawasset.contract.effect
+			};
+			history.push(contract);
+
+			if(rawasset.contract.prevTransactionId) {
+				__private.getHistory(rawasset.contract.prevTransactionId, limit, history, cb);
+			}
+			else {
+				return cb(null, history);
+			}
+		}).catch(function (err) {
+			library.logger.error('stack', err);
+			return cb('Contracts#get error');
+		});
+	}
+	else {
+		return cb(null, history);
+	}
 };
 
 // Public methods
@@ -196,6 +229,8 @@ shared.getContracts = function (req, cb) {
 			rows.forEach(function (row) {
 				var rawasset = JSON.parse(row.rawasset);
 				var contract = {
+					'type': rawasset.contract.type,
+					'label': rawasset.contract.label,
 					'cause': rawasset.contract.cause,
 					'effect': rawasset.contract.effect
 				};
@@ -226,6 +261,8 @@ shared.getContract = function (req, cb) {
 			var rawasset = JSON.parse(rows[0].rawasset);
 			return cb(null,  {
 				'contract': {
+					'type': rawasset.contract.type,
+					'label': rawasset.contract.label,
 					'cause': rawasset.contract.cause,
 					'effect': rawasset.contract.effect
 				}
@@ -237,6 +274,22 @@ shared.getContract = function (req, cb) {
 	});
 };
 
+
+shared.getHistory = function(req, cb) {
+	var history = [];
+
+	library.schema.validate(req.body, schema.getHistory, function (err) {
+		if (err) {
+			return cb(err[0].message);
+		}
+
+		var limit = 10;
+		if(req.body.limit) {
+			limit = req.body.limit;
+		}
+		__private.getHistory(req.body.id, limit, history, cb);
+	});
+};
 
 // Export
 module.exports = Contracts;

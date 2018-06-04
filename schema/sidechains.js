@@ -39,6 +39,11 @@ module.exports = {
 				type: 'string',
 				minLength: 3,
 				maxLength: 6
+			},
+			limit: {
+				type: 'integer',
+				minimum: 1,
+				maximum: 50
 			}
 		}
 	}

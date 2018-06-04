@@ -2,7 +2,7 @@
 
 var constants = require('../constants.json');
 var sql = require('../sql/sidechains.js');
-
+var tsql = require('../sql/transactions.js');
 // Private fields
 var modules, library;
 
@@ -46,10 +46,45 @@ Sidechain.prototype.verify = function (trs, sender, cb) {
 		return cb('Invalid transaction asset.');
 	}
 	if(!trs.asset.sidechain.config) {
-		return cb('Invalid asset config. Must be an object.');
+		return cb('Invalid asset config.');
 	}
 	if(!trs.asset.sidechain.constants) {
 		return cb('Invalid constants asset.');
+	}
+	if (!trs.asset.sidechain.genesis) {
+		return cb('Invalid genesis object.');
+	}
+	if (!trs.asset.sidechain.network) {
+		return cb('Invalid network.');
+	}
+	if (!trs.asset.sidechain.status) {
+		return cb('Invalid transaction status.');
+	}
+	if(!trs.asset.sidechain.hasOwnProperty('prevTransactionId')) {
+		return cb('Invalid previous transaction id.');
+	}
+	if(!trs.asset.sidechain.prevTransactionId)
+	{
+		library.db.query(sql.countByTicker, {ticker: trs.asset.sidechain.network.tokenShortName}).then(function (rows) {
+			if(rows[0].count) {
+				return cb('Sidechain ticker name already exists.');
+			}
+		});
+		//catch block for query
+	}
+	else {
+		library.db.query(tsql.countById, {id: trs.asset.sidechain.prevTransactionId}).then(function (rows) {
+			if(!rows.count) {
+				return cb('Invalid previous transaction id.');
+			}
+		});
+		//catch block for query
+	}
+	if (!trs.asset.sidechain.config.peersList) {
+		return cb('Invalid peers asset.');
+	}
+	if (!trs.asset.sidechain.config.nethash) {
+		return cb('Invalid nethash.');
 	}
 	if (!trs.asset.sidechain.constants.activeDelegates) {
 		return cb('Active delegates must not be empty.');
@@ -75,21 +110,6 @@ Sidechain.prototype.verify = function (trs, sender, cb) {
 	if (!trs.asset.sidechain.constants.totalAmount) {
 		return cb('Invalid total amount.');
 	}
-	if (!trs.asset.sidechain.genesis) {
-		return cb('Invalid genesis object.');
-	}
-	if (!trs.asset.sidechain.status) {
-		return cb('Invalid transaction status.');
-	}
-	if (!trs.asset.sidechain.config.peersList) {
-		return cb('Invalid peers asset.');
-	}
-	if (!trs.asset.sidechain.config.nethash) {
-		return cb('Invalid nethash.');
-	}
-	if (!trs.asset.sidechain.network) {
-		return cb('Invalid network.');
-	}
 	if (!trs.asset.sidechain.network.token) {
 		return cb('Invalid token name.');
 	}
@@ -104,17 +124,6 @@ Sidechain.prototype.verify = function (trs, sender, cb) {
 	}
 	if (!trs.asset.sidechain.network.explorer) {
 		return cb('Invalid explorer link.');
-	}
-	if(!trs.asset.sidechain.prevTransactionId)
-	{
-		library.db.query(sql.countByTicker, {ticker: trs.asset.sidechain.network.tokenShortName}).then(function (rows) {
-			if(rows[0].count) {
-				return cb('Sidechain ticker name already exist.');
-			}
-		});
-	}
-	if (!trs.asset.sidechain.status) {
-		return cb('Invalid status.');
 	}
 
 	return cb(null, trs);
@@ -235,7 +244,7 @@ Sidechain.prototype.dbSave = function (trs) {
 	}
 	else
 	{
-		library.db.query(sql.updateTransactionId,{ticker: trs.asset.sidechain.network.tokenShortName, transactionId: trs.id});
+		library.db.query(sql.updateTransactionId, {ticker: trs.asset.sidechain.network.tokenShortName, transactionId: trs.id});
 	}
 };
 

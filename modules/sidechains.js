@@ -37,7 +37,7 @@ __private.attachApi = function () {
 	router.map(shared, {
 		'get /': 'getSidechains',
 		'get /get': 'getSidechain',
-		'get /history': 'getSidechainHistory'
+		'get /history': 'getHistory'
 	});
 
 	router.use(function (req, res, next) {
@@ -50,6 +50,41 @@ __private.attachApi = function () {
 		library.logger.error(`API error ${  req.url}`, err);
 		res.status(500).send({success: false, error: 'API error', message: err.message});
 	});
+};
+
+
+__private.getHistory = function (transactionId, limit, history, cb) {
+	if(history.length < limit) {
+		library.db.query(tsql.getRawAssetById, {id: transactionId}).then(function (rows) {
+			if (!rows.length) {
+				return cb('Sidechain history not found.');
+			}
+
+			var rawasset = JSON.parse(rows[0].rawasset);
+
+			var sidechain = {
+				'config': rawasset.sidechain.config,
+				'constants': rawasset.sidechain.constants,
+				'genesis': JSONC.decompress(rawasset.sidechain.genesis),
+				'network': rawasset.sidechain.network,
+				'status': rawasset.sidechain.status
+			};
+
+			history.push(sidechain);
+			if(rawasset.sidechain.prevTransactionId) {
+				__private.getHistory(rawasset.sidechain.prevTransactionId, limit, history, cb);
+			}
+			else {
+				return cb(null, history);
+			}
+		}).catch(function (err) {
+			library.logger.error('stack', err);
+			return cb('Sidechains#get error');
+		});
+	}
+	else {
+		return cb(null, history);
+	}
 };
 
 // Public methods
@@ -200,7 +235,7 @@ shared.getSidechains = function (req, cb) {
 			return cb(null,  {'sidechains': sidechains});
 		}).catch(function (err) {
 			library.logger.error('stack', err);
-			return cb('Sidechains#getByPublicKey error');
+			return cb('Sidechains#get error');
 		});
 	});
 };
@@ -248,91 +283,40 @@ shared.getSidechain = function (req, cb) {
 	});
 };
 
-// __private.getPrevTransaction = function (prevTransactionId, cb) {
-// 	library.db.query(sql.getById, {id: prevTransactionId}).then(function (rows) {
-// 		if (!rows.length) {
-// 			return cb('Sidechain history not found');
-// 		}
-// 		var rawasset = JSON.parse(rows[0].rawasset);
-// 		var sidechain = {
-// 			'config': rawasset.sidechain.config,
-// 			'constants': rawasset.sidechain.constants,
-// 			'genesis': JSONC.decompress(rawasset.sidechain.genesis),
-// 			'network': rawasset.sidechain.network,
-// 			'status': rawasset.sidechain.status
-// 		};
-// 		console.log('>>>>>>>>>>>> 2');
-// 		return cb(null, sidechain);
-// 	}).catch(function (err) {
-// 		library.logger.error('stack', err);
-// 		return cb('Sidechains#get123 error');
-// 	});
-// };
-//
-// shared.getSidechainHistory = function(req, cb) {
-// 	library.schema.validate(req.body, schema.getHistory, function (err) {
-// 		if (err) {
-// 			return cb(err[0].message);
-// 		}
-//
-// 		var query = '', params = {}, errMsg = '';
-// 		if(req.body.id) {
-// 			query = sql.getById;
-// 			params = {id: req.body.id};
-// 			errMsg = 'Sidechain history not found: ' +req.body.id;
-// 		}
-// 		else if(req.body.ticker) {
-// 			query = sql.getByTicker;
-// 			params = {ticker: req.body.ticker};
-// 			errMsg = 'Sidechain history not found: ' +req.body.ticker;
-// 		}
-// 		else {
-// 			return cb(null, {success: false, error: 'Missing required property: id or ticker'});
-// 		}
-//
-// 		library.db.query(query, params).then(function (rows) {
-// 			if (!rows.length) {
-// 				return cb(errMsg);
-// 			}
-//
-// 			var history = [];
-// 			var rawasset = JSON.parse(rows[0].rawasset);
-//
-// 			var sidechain = {
-// 				'config': rawasset.sidechain.config,
-// 				'constants': rawasset.sidechain.constants,
-// 				'genesis': JSONC.decompress(rawasset.sidechain.genesis),
-// 				'network': rawasset.sidechain.network,
-// 				'status': rawasset.sidechain.status
-// 			};
-// 			history.push(sidechain);
-//
-// 			if(rawasset.sidechain.prevTransactionId) {
-// 				console.log('>>>>>>>>>>>>> 1');
-// 				__private.getPrevTransaction(rawasset.sidechain.prevTransactionId, function(err, res) {
-// 					console.log('>>>>>>>>>>>>>> 3');
-// 					if(err) {
-// 						console.log('>???????????D');
-// 					}
-//
-// 					sidechain = {
-// 						'config': res.config,
-// 						'constants': res.constants,
-// 						'genesis': res.genesis,
-// 						'network': res.network,
-// 						'status': res.status
-// 					};
-// 					history.push(sidechain);
-// 					return cb(null, history);
-// 				});
-// 			}
-// 			return cb(null, history);
-// 		}).catch(function (err) {
-// 			library.logger.error('stack', err);
-// 			return cb('Sidechains#get error');
-// 		});
-// 	});
-// };
+
+shared.getHistory = function(req, cb) {
+	var history = [];
+
+	library.schema.validate(req.body, schema.getHistory, function (err) {
+		if (err) {
+			return cb(err[0].message);
+		}
+
+		var limit = 10;
+		if(req.body.limit) {
+			limit = req.body.limit;
+		}
+
+		if(req.body.ticker) {
+			library.db.query(sql.getTransactionId, {ticker: req.body.ticker}).then(function (rows) {
+				if (!rows.length) {
+					return cb('Sidechain history not found.');
+				}
+
+				__private.getHistory(rows[0].transactionId, limit, history, cb);
+			}).catch(function (err) {
+				library.logger.error('stack', err);
+				return cb('Sidechains#get error');
+			});
+		}
+		else if(req.body.id) {
+			__private.getHistory(req.body.id, limit, history, cb);
+		}
+		else {
+			return cb(null, {success: false, error: 'Missing required property: id or ticker'});
+		}
+	});
+};
 
 // Export
 module.exports = Sidechains;

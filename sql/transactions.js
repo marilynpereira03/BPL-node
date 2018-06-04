@@ -42,7 +42,7 @@ var TransactionsSql = {
 
   getVotesById: 'SELECT * FROM votes WHERE "transactionId" = ${id}',
 
-  getRawAssetById: 'SELECT rawasset FROM transactions WHERE "id" = ${id};'
+  getRawAssetById: 'SELECT "rawasset" FROM transactions WHERE "id" = ${id};'
 
 };
 
