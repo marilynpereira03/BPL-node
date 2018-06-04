@@ -3,9 +3,11 @@
 var constants = require('../constants.json');
 var contractTypes = require('../helpers/contractTypes.js');
 var bpljs = require('bpljs');
+var tsql = require('../sql/transactions.js');
+var sql = require('../sql/contracts.js');
 
 // Private fields
-var modules, __private = {};
+var modules, __private = {}, library;
 
 // Constructor
 function Contract () {}
@@ -33,6 +35,8 @@ __private.validation = function (type, cause, effect) {
 	return 'Invalid type asset.';
 };
 
+
+
 // Public methods
 //
 //__API__ `bind`
@@ -40,6 +44,7 @@ __private.validation = function (type, cause, effect) {
 //
 Contract.prototype.bind = function (scope) {
 	modules = scope.modules;
+	library = scope.library;
 };
 
 //
@@ -49,7 +54,6 @@ Contract.prototype.bind = function (scope) {
 Contract.prototype.create = function (data, trs) {
 	trs.recipientId = null;
 	trs.amount = 0;
-	trs.asset.contract.type = data.type;
 	return trs;
 };
 
@@ -71,7 +75,7 @@ Contract.prototype.verify = function (trs, sender, cb) {
 		return cb('Invalid transaction asset.');
 	}
 	if (!trs.asset.contract.type) {
-		return cb('Invalid type asset 1.');
+		return cb('Invalid type asset.');
 	}
 	if (!trs.asset.contract.cause) {
 		return cb('Invalid cause asset.');
@@ -79,6 +83,17 @@ Contract.prototype.verify = function (trs, sender, cb) {
 	if (!trs.asset.contract.effect) {
 		return cb('Invalid effect asset.');
 	}
+	if(!trs.asset.contract.hasOwnProperty('prevTransactionId')) {
+		return cb('Invalid previous transaction id.');
+	}
+	// if(!trs.asset.contract.prevTransactionId) {
+	// 	console.log(">>>>>>>>>>>>>> 102");
+	// 	library.db.query(tsql.countById, {id: trs.asset.contract.prevTransactionId}).then(function (rows) {
+	// 		if(!rows.count) {
+	// 			return cb('Invalid previous transaction id.');
+	// 		}
+	// 	});
+		//catch block for query
 
 	var msg = __private.validation(trs.asset.contract.type, trs.asset.contract.cause, trs.asset.contract.effect);
 	if(msg) {
@@ -190,16 +205,23 @@ Contract.prototype.dbFields = [
 	'isActive'
 ];
 Contract.prototype.dbSave = function (trs) {
-	return {
-		table: this.dbTable,
-		fields: this.dbFields,
-		values: {
-			accountId: trs.asset.contract.cause.address,
-			publicKey: trs.senderPublicKey,
-			transactionId: trs.id,
-			isActive: true
-		}
-	};
+	if(!trs.asset.contract.prevTransactionId)
+	{
+		return {
+			table: this.dbTable,
+			fields: this.dbFields,
+			values: {
+				accountId: trs.asset.contract.cause.address,
+				publicKey: trs.senderPublicKey,
+				transactionId: trs.id,
+				isActive: true
+			}
+		};
+	}
+	else
+	{
+		library.db.query(sql.updateTransactionId, {prevTransactionId: trs.asset.contract.prevTransactionId, transactionId: trs.id});
+	}
 };
 
 //
