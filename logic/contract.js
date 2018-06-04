@@ -25,7 +25,7 @@ __private.validation = function (type, cause, effect) {
 				return 'Invalid '+causeProps[i]+' asset.';
 		}
 
-		for(var i=0; i<effectProps.length; i++) {
+		for(var j=0; j<effectProps.length; j++) {
 			if(!effect[effectProps[i]])
 				return 'Invalid '+effectProps[i]+' asset.';
 		}

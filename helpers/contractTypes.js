@@ -5,5 +5,5 @@ module.exports = {
     label: 'Sidechain Payment',
     cause: ['address', 'balance', 'minConfirmations'],
     effect: ['transactionId']
-  },
+  }
 };
