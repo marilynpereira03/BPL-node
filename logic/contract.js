@@ -26,8 +26,8 @@ __private.validation = function (type, cause, effect) {
 		}
 
 		for(var j=0; j<effectProps.length; j++) {
-			if(!effect[effectProps[i]])
-				return 'Invalid '+effectProps[i]+' asset.';
+			if(!effect[effectProps[j]])
+				return 'Invalid '+effectProps[j]+' asset.';
 		}
 
 		return null;
@@ -86,14 +86,15 @@ Contract.prototype.verify = function (trs, sender, cb) {
 	if(!trs.asset.contract.hasOwnProperty('prevTransactionId')) {
 		return cb('Invalid previous transaction id.');
 	}
-	// if(!trs.asset.contract.prevTransactionId) {
-	// 	console.log(">>>>>>>>>>>>>> 102");
+	// if(trs.asset.contract.prevTransactionId)
+	// {
 	// 	library.db.query(tsql.countById, {id: trs.asset.contract.prevTransactionId}).then(function (rows) {
 	// 		if(!rows.count) {
 	// 			return cb('Invalid previous transaction id.');
 	// 		}
 	// 	});
-		//catch block for query
+	// 	//catch block for query
+	// }
 
 	var msg = __private.validation(trs.asset.contract.type, trs.asset.contract.cause, trs.asset.contract.effect);
 	if(msg) {
