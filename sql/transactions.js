@@ -42,7 +42,11 @@ var TransactionsSql = {
 
   getVotesById: 'SELECT * FROM votes WHERE "transactionId" = ${id}',
 
-  getRawAssetById: 'SELECT "rawasset" FROM transactions WHERE "id" = ${id};'
+  getRawAssetById: 'SELECT "rawasset" FROM transactions WHERE "id" = ${id};',
+
+  countByIdAndType: 'SELECT COUNT("id")::int AS "count" FROM transactions WHERE "id" = ${id} AND "type" = ${type};',
+
+  countConfirmations: 'SELECT (SELECT MAX(height) + 1 FROM blocks) - b.height AS confirmations FROM transactions t, blocks b WHERE b.id = t."blockId" AND t.id = ${id};'
 
 };
 

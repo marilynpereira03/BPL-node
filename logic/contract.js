@@ -1,9 +1,9 @@
 'use strict';
 
+var async = require('async');
+var bpljs = require('bpljs');
 var constants = require('../constants.json');
 var contractTypes = require('../helpers/contractTypes.js');
-var bpljs = require('bpljs');
-var tsql = require('../sql/transactions.js');
 var sql = require('../sql/contracts.js');
 
 // Private fields
@@ -13,8 +13,8 @@ var modules, __private = {}, library;
 function Contract () {}
 
 // Private menthods
-__private.validation = function (type, cause, effect) {
-	var type = ''+type;
+__private.validateFields = function (type, cause, effect) {
+	type = ''+type;
 
 	if(contractTypes[type]) {
 		var causeProps = contractTypes[type].cause;
@@ -65,7 +65,6 @@ Contract.prototype.calculateFee = function (trs) {
 	return constants.fees.contract;
 };
 
-
 //
 //__API__ `verify`
 
@@ -83,25 +82,79 @@ Contract.prototype.verify = function (trs, sender, cb) {
 	if (!trs.asset.contract.effect) {
 		return cb('Invalid effect asset.');
 	}
-	if(!trs.asset.contract.hasOwnProperty('prevTransactionId')) {
-		return cb('Invalid previous transaction id.');
-	}
-	// if(trs.asset.contract.prevTransactionId)
-	// {
-	// 	library.db.query(tsql.countById, {id: trs.asset.contract.prevTransactionId}).then(function (rows) {
-	// 		if(!rows.count) {
-	// 			return cb('Invalid previous transaction id.');
-	// 		}
-	// 	});
-	// 	//catch block for query
-	// }
-
-	var msg = __private.validation(trs.asset.contract.type, trs.asset.contract.cause, trs.asset.contract.effect);
+	var msg = __private.validateFields(trs.asset.contract.type, trs.asset.contract.cause, trs.asset.contract.effect);
 	if(msg) {
-		return cb(msg)
+		return cb(msg);
+	}
+	if (!trs.asset.contract.hasOwnProperty('prevTransactionId')) {
+		return cb('Missing property - prevTransactionId.');
 	}
 
-	return cb(null, trs);
+	async.series([
+		function(callback) {
+			if (trs.asset.contract.prevTransactionId) {
+				library.logic.transaction.countByIdAndType({id: trs.asset.contract.prevTransactionId, type: 6}, function (err, count) {
+					if (err) {
+						callback(err);
+					}
+					else if (!count) {
+						callback('Invalid previous transaction id.');
+					}
+					else {
+						callback(null, 'success');
+					}
+				});
+			}
+			else {
+				callback(null, 'success');
+			}
+		},
+		function(callback) {
+			//Sidechain Payment Smart Contract type === 1
+			if(trs.asset.contract.type === 1 && trs.asset.contract.effect.transactionId) {
+				library.logic.transaction.countByIdAndType({id: trs.asset.contract.effect.transactionId, type: 7}, function (err, count) {
+					if (err) {
+						callback(err);
+					}
+					else if (!count) {
+						callback('Invalid sidechain transaction id.');
+					}
+					else {
+						callback(null, 'success');
+					}
+				});
+			}
+			else {
+				callback(null, 'success');
+			}
+		},
+		function(callback) {
+			//Sidechain Payment Smart Contract type === 1
+			if(trs.asset.contract.type === 1) {
+				library.logic.transaction.countConfirmations({id: trs.asset.contract.effect.transactionId, type: 7}, function (err, confirmations) {
+					if (err) {
+						callback(err);
+					}
+					else if (confirmations < 60) {
+						callback('Minimum 60 confirmations needed. Sidechain has '+confirmations+' confimations.');
+					}
+					else {
+						callback(null, 'success');
+					}
+				});
+			}
+			else {
+				callback(null, 'success');
+			}
+		}
+	], function(err) {
+		if(err) {
+			return cb(err);
+		}
+		else {
+			return cb(null, trs);
+		}
+	});
 };
 
 //

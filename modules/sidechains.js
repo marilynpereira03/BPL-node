@@ -184,6 +184,19 @@ Sidechains.prototype.undoUnconfirmed = function (transaction, cb) {
 	}, cb);
 };
 
+//
+//__API__ `countById`
+
+//
+Sidechains.prototype.countByTicker = function (trs, cb) {
+	library.db.one(sql.countByTicker, {ticker: trs.asset.sidechain.network.tokenShortName}).then(function (row) {
+		return cb(null, row.count);
+	}).catch(function (err) {
+		this.scope.logger.error(err.stack);
+		return cb('Sidechain#countByTicker error');
+	});
+};
+
 // Events
 //
 //__EVENT__ `onBind`
@@ -204,7 +217,6 @@ Sidechains.prototype.onBind = function (scope) {
 Sidechains.prototype.onAttachPublicApi = function () {
 	__private.attachApi();
 };
-
 
 // Shared
 shared.getSidechains = function (req, cb) {

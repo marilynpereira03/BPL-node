@@ -1,8 +1,10 @@
 'use strict';
 
+var async = require('async');
 var constants = require('../constants.json');
 var sql = require('../sql/sidechains.js');
 var tsql = require('../sql/transactions.js');
+
 // Private fields
 var modules, library;
 
@@ -60,26 +62,6 @@ Sidechain.prototype.verify = function (trs, sender, cb) {
 	if (!trs.asset.sidechain.status) {
 		return cb('Invalid transaction status.');
 	}
-	if(!trs.asset.sidechain.hasOwnProperty('prevTransactionId')) {
-		return cb('Invalid previous transaction id.');
-	}
-	if(!trs.asset.sidechain.prevTransactionId)
-	{
-		library.db.query(sql.countByTicker, {ticker: trs.asset.sidechain.network.tokenShortName}).then(function (rows) {
-			if(rows[0].count) {
-				return cb('Sidechain ticker name already exists.');
-			}
-		});
-		//catch block for query
-	}
-	else {
-		library.db.query(tsql.countById, {id: trs.asset.sidechain.prevTransactionId}).then(function (rows) {
-			if(!rows.count) {
-				return cb('Invalid previous transaction id.');
-			}
-		});
-		//catch block for query
-	}
 	if (!trs.asset.sidechain.config.peersList) {
 		return cb('Invalid peers asset.');
 	}
@@ -125,8 +107,56 @@ Sidechain.prototype.verify = function (trs, sender, cb) {
 	if (!trs.asset.sidechain.network.explorer) {
 		return cb('Invalid explorer link.');
 	}
+	if(!trs.asset.sidechain.hasOwnProperty('prevTransactionId')) {
+		return cb('Missing property - prevTransactionId.');
+	}
 
-	return cb(null, trs);
+	async.series([
+		function(callback) {
+			if (trs.asset.sidechain.prevTransactionId) {
+				library.logic.transaction.countByIdAndType({id: trs.asset.sidechain.prevTransactionId, type: 7}, function (err, count) {
+					if (err) {
+						callback(err);
+					}
+					else if (!count) {
+						callback('Invalid previous transaction id.');
+					}
+					else {
+						callback(null, 'success');
+					}
+				});
+			}
+			else {
+				callback(null, 'success');
+			}
+		},
+		function(callback) {
+			if(!trs.asset.sidechain.prevTransactionId)
+			{
+				modules.sidechains.countByTicker(trs, function (err, count) {
+					if (err) {
+						callback(err);
+					}
+					else if (count) {
+						callback('Sidechain ticker name already exists.');
+					}
+					else {
+						callback(null, 'success');
+					}
+				});
+			}
+			else {
+				callback(null, 'success');
+			}
+		}
+	], function(err) {
+		if(err) {
+			return cb(err);
+		}
+		else {
+			return cb(null, trs);
+		}
+	});
 };
 
 //
