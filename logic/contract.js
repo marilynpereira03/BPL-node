@@ -93,7 +93,7 @@ Contract.prototype.verify = function (trs, sender, cb) {
 	async.series([
 		function(callback) {
 			if (trs.asset.contract.prevTransactionId) {
-				library.logic.transaction.countByIdAndType({id: trs.asset.contract.prevTransactionId, type: 6}, function (err, count) {
+				modules.transactions.countByIdAndType({id: trs.asset.contract.prevTransactionId, type: 6}, function (err, count) {
 					if (err) {
 						callback(err);
 					}
@@ -112,7 +112,7 @@ Contract.prototype.verify = function (trs, sender, cb) {
 		function(callback) {
 			//Sidechain Payment Smart Contract type === 1
 			if(trs.asset.contract.type === 1 && trs.asset.contract.effect.transactionId) {
-				library.logic.transaction.countByIdAndType({id: trs.asset.contract.effect.transactionId, type: 7}, function (err, count) {
+				modules.transactions.countByIdAndType({id: trs.asset.contract.effect.transactionId, type: 7}, function (err, count) {
 					if (err) {
 						callback(err);
 					}
@@ -131,11 +131,11 @@ Contract.prototype.verify = function (trs, sender, cb) {
 		function(callback) {
 			//Sidechain Payment Smart Contract type === 1
 			if(trs.asset.contract.type === 1) {
-				library.logic.transaction.countConfirmations({id: trs.asset.contract.effect.transactionId, type: 7}, function (err, confirmations) {
+				modules.transactions.countConfirmations({id: trs.asset.contract.effect.transactionId, type: 7}, function (err, confirmations) {
 					if (err) {
 						callback(err);
 					}
-					else if (confirmations < 60) {
+					else if (confirmations < 10) {
 						callback('Minimum 60 confirmations needed. Sidechain has '+confirmations+' confimations.');
 					}
 					else {
@@ -229,12 +229,39 @@ Contract.prototype.undoUnconfirmed = function (trs, sender, cb) {
 	return cb(null, trs);
 };
 
+Contract.prototype.schema = {
+	id: 'Contract',
+	type: 'object',
+	properties: {
+		publicKey: {
+			type: 'string',
+			format: 'publicKey'
+		}
+	},
+	address: {
+		type: 'string'
+	},
+	required: ['publicKey', 'address']
+};
+
 //
 //__API__ `objectNormalize`
 
 //
 Contract.prototype.objectNormalize = function (trs) {
-	delete trs.blockId;
+	var asset = {
+		publicKey: trs.senderPublicKey,
+		address: trs.asset.contract.effect.address
+	};
+
+	var report = library.schema.validate(asset, Contract.prototype.schema);
+
+	if (!report) {
+		throw 'Failed to validate Contract schema: ' + this.scope.schema.getLastErrors().map(function (err) {
+			return err.message;
+		}).join(', ');
+	}
+
 	return trs;
 };
 

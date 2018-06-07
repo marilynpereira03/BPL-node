@@ -114,7 +114,7 @@ Sidechain.prototype.verify = function (trs, sender, cb) {
 	async.series([
 		function(callback) {
 			if (trs.asset.sidechain.prevTransactionId) {
-				library.logic.transaction.countByIdAndType({id: trs.asset.sidechain.prevTransactionId, type: 7}, function (err, count) {
+				modules.transactions.countByIdAndType({id: trs.asset.sidechain.prevTransactionId, type: 7}, function (err, count) {
 					if (err) {
 						callback(err);
 					}
@@ -231,12 +231,40 @@ Sidechain.prototype.undoUnconfirmed = function (trs, sender, cb) {
 	return cb(null, trs);
 };
 
+Sidechain.prototype.schema = {
+	id: 'Sidechain',
+	type: 'object',
+	properties: {
+		publicKey: {
+			type: 'string',
+			format: 'publicKey'
+		},
+		ticker: {
+			type: 'string',
+			minimum: 3,
+			maximum: 6
+		}
+	},
+	required: ['publicKey', 'ticker']
+};
+
 //
 //__API__ `objectNormalize`
 
 //
 Sidechain.prototype.objectNormalize = function (trs) {
-	delete trs.blockId;
+	var asset = {
+		publicKey: trs.senderPublicKey,
+		ticker: trs.asset.sidechain.network.tokenShortName
+	}
+
+	var report = library.schema.validate(asset, Sidechain.prototype.schema);
+	if (!report) {
+		throw 'Failed to validate Sidechain schema: ' + this.scope.schema.getLastErrors().map(function (err) {
+			return err.message;
+		}).join(', ');
+	}
+
 	return trs;
 };
 

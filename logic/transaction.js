@@ -273,32 +273,6 @@ Transaction.prototype.countById = function (trs, cb) {
 };
 
 //
-//__API__ `countByIdAndType`
-
-//
-Transaction.prototype.countByIdAndType = function (trs, cb) {
-	this.scope.db.one(sql.countByIdAndType, { id: trs.id, type: trs.type }).then(function (row) {
-		return cb(null, row.count);
-	}).catch(function (err) {
-		this.scope.logger.error(err.stack);
-		return cb('Transaction#countByIdAndType error');
-	});
-};
-
-//
-//__API__ `countConfirmations`
-
-//
-Transaction.prototype.countConfirmations = function (trs, cb) {
-	this.scope.db.one(sql.countConfirmations, { id: trs.id}).then(function (row) {
-		return cb(null, row.confirmations);
-	}).catch(function (err) {
-		this.scope.logger.error(err.stack);
-		return cb('Transaction#countConfirmations error');
-	});
-};
-
-//
 //__API__ `checkConfirmed`
 
 //
