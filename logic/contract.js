@@ -251,7 +251,7 @@ Contract.prototype.schema = {
 Contract.prototype.objectNormalize = function (trs) {
 	var asset = {
 		publicKey: trs.senderPublicKey,
-		address: trs.asset.contract.effect.address
+		address: trs.asset.contract.cause.address
 	};
 
 	var report = library.schema.validate(asset, Contract.prototype.schema);
@@ -285,6 +285,7 @@ Contract.prototype.dbFields = [
 	'transactionId',
 	'isActive'
 ];
+
 Contract.prototype.dbSave = function (trs) {
 	if(!trs.asset.contract.prevTransactionId)
 	{
@@ -301,7 +302,11 @@ Contract.prototype.dbSave = function (trs) {
 	}
 	else
 	{
-		library.db.query(sql.updateTransactionId, {prevTransactionId: trs.asset.contract.prevTransactionId, transactionId: trs.id});
+		library.db.none(sql.updateTransactionId, {prevTransactionId: trs.asset.contract.prevTransactionId, transactionId: trs.id}).then(function () {
+		}).catch(function (err) {
+			library.logger.error("stack", err.stack);
+		});
+		return null;
 	}
 };
 

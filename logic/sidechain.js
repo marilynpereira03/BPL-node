@@ -287,6 +287,7 @@ Sidechain.prototype.dbFields = [
 	'transactionId',
 	'publicKey'
 ];
+
 Sidechain.prototype.dbSave = function (trs) {
 	if(!trs.asset.sidechain.prevTransactionId)
 	{
@@ -302,7 +303,11 @@ Sidechain.prototype.dbSave = function (trs) {
 	}
 	else
 	{
-		library.db.query(sql.updateTransactionId, {ticker: trs.asset.sidechain.network.tokenShortName, transactionId: trs.id});
+		library.db.none(sql.updateTransactionId, {ticker: trs.asset.sidechain.network.tokenShortName, transactionId: trs.id}).then(function () {
+		}).catch(function (err) {
+			library.logger.error("stack", err.stack);
+		});
+		return null;
 	}
 };
 
