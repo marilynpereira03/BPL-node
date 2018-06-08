@@ -1,5 +1,5 @@
 {
-  "activeDelegates": 201,
+  "activeDelegates": 51,
   "maximumVotes": 1,
   "addressLength": 208,
   "blockHeaderLength": 248,
@@ -10,7 +10,9 @@
     "vote": 100000000,
     "secondsignature": 500000000,
     "delegate": 1000000000,
-    "multisignature": 500000000
+    "multisignature": 500000000,
+    "contract": 10000000,
+    "sidechain":10000000
   },
   "feeStart": 1,
   "feeStartVolume": 1000000000000,

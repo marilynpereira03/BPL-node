@@ -38,7 +38,6 @@ program
 	.option('-l, --log <level>', 'log level')
 	.option('-i, --interactive', 'launch cli')
 	.parse(process.argv);
-
 if (program.config) {
 	appConfig = require(path.resolve(process.cwd(), program.config));
 	process.env.CONFIG_NAME = program.config;
@@ -82,7 +81,6 @@ if (program.log) {
 if (program.interactive) {
 	appConfig.consoleLogLevel = "none";
 }
-
 var config = {
 	db: appConfig.db,
 	modules: {
@@ -100,7 +98,9 @@ var config = {
 		transactionPool: './modules/transactionPool.js',
 		blockchain: './modules/blockchain.js',
 		nodeManager: './modules/nodeManager.js',
-		blockRewards: './modules/blockRewards.js'
+		blockRewards: './modules/blockRewards.js',
+		contracts: './modules/contracts.js',
+		sidechains: './modules/sidechains.js'
 	}
 };
 

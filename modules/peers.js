@@ -76,7 +76,6 @@ __private.attachApi = function () {
 	router.use(function (req, res) {
 		res.status(500).send({success: false, error: 'API endpoint not found'});
 	});
-
 	library.network.app.use('/api/peers', router);
 	library.network.app.use(function (err, req, res, next) {
 		if (!err) { return next(); }

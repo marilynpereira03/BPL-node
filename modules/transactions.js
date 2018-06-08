@@ -303,6 +303,32 @@ Transactions.prototype.undoUnconfirmed = function (transaction, cb) {
 	}, cb);
 };
 
+//
+//__API__ `countByIdAndType`
+
+//
+Transactions.prototype.countByIdAndType = function (trs, cb) {
+	library.db.one(sql.countByIdAndType, { id: trs.id, type: trs.type }).then(function (row) {
+		return cb(null, row.count);
+	}).catch(function (err) {
+		this.scope.logger.error(err.stack);
+		return cb('Transaction#countByIdAndType error');
+	});
+};
+
+//
+//__API__ `countConfirmations`
+
+//
+Transactions.prototype.countConfirmations = function (trs, cb) {
+	library.db.one(sql.countConfirmations, { id: trs.id}).then(function (row) {
+		return cb(null, row.confirmations);
+	}).catch(function (err) {
+		this.scope.logger.error(err.stack);
+		return cb('Transaction#countConfirmations error');
+	});
+};
+
 // Events
 //
 //__EVENT__ `onBind`

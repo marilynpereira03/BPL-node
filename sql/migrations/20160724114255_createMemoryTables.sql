@@ -70,6 +70,18 @@ CREATE TABLE IF NOT EXISTS "mem_accounts2u_multisignatures"(
   FOREIGN KEY ("accountId") REFERENCES mem_accounts("address") ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS "sidechains"(
+  "ticker" VARCHAR(6) PRIMARY KEY,
+  "publicKey" bytea NOT NULL,
+  "transactionId" VARCHAR(64) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS "contracts"(
+  "accountId" VARCHAR(36) NOT NULL,
+  "publicKey" bytea NOT NULL,
+  "transactionId" VARCHAR(64) NOT NULL,
+  "isActive" VARCHAR(5) NOT NULL
+);
 
 CREATE INDEX IF NOT EXISTS "mem_delegates_vote" ON "mem_delegates"("vote");
 
