@@ -236,10 +236,10 @@ Contract.prototype.schema = {
 		publicKey: {
 			type: 'string',
 			format: 'publicKey'
-		}
-	},
-	address: {
-		type: 'string'
+		},
+		address: {
+			type: 'string'
+		},
 	},
 	required: ['publicKey', 'address']
 };

@@ -3,7 +3,6 @@
 var async = require('async');
 var constants = require('../constants.json');
 var sql = require('../sql/sidechains.js');
-var tsql = require('../sql/transactions.js');
 
 // Private fields
 var modules, library;
@@ -170,18 +169,22 @@ Sidechain.prototype.process = function (trs, sender, cb) {
 //
 //__API__ `getBytes`
 
-//ToDo
+//
 Sidechain.prototype.getBytes = function (trs) {
 	var buf;
+
 	if(trs.asset.sidechain.network.tokenShortName)
 	{
-		buf = new Buffer(trs.asset.sidechain.network.tokenShortName, 'utf8');
+		try {
+			buf = new Buffer(trs.asset.sidechain.network.tokenShortName, 'utf8');
+			return buf;
+		} catch (e) {
+			throw e;
+		}
 	}
 	else {
 		return null;
 	}
-	return buf;
-
 };
 
 //
