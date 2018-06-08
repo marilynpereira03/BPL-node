@@ -110,7 +110,7 @@ Sidechain.prototype.verify = function (trs, sender, cb) {
 		return cb('Missing property - prevTransactionId.');
 	}
 
-	async.series([
+	async.parallel([
 		function(callback) {
 			if (trs.asset.sidechain.prevTransactionId) {
 				modules.transactions.countByIdAndType({id: trs.asset.sidechain.prevTransactionId, type: 7}, function (err, count) {
@@ -121,12 +121,12 @@ Sidechain.prototype.verify = function (trs, sender, cb) {
 						callback('Invalid previous transaction id.');
 					}
 					else {
-						callback(null, 'success');
+						callback(null);
 					}
 				});
 			}
 			else {
-				callback(null, 'success');
+				callback(null);
 			}
 		},
 		function(callback) {
@@ -140,12 +140,12 @@ Sidechain.prototype.verify = function (trs, sender, cb) {
 						callback('Sidechain ticker name already exists.');
 					}
 					else {
-						callback(null, 'success');
+						callback(null);
 					}
 				});
 			}
 			else {
-				callback(null, 'success');
+				callback(null);
 			}
 		}
 	], function(err) {
@@ -306,7 +306,8 @@ Sidechain.prototype.dbSave = function (trs) {
 	}
 	else
 	{
-		library.db.none(sql.updateTransactionId, {ticker: trs.asset.sidechain.network.tokenShortName, transactionId: trs.id}).then(function () {
+		library.db.none(sql.updateTransactionId, {oldTransactionId: trs.asset.sidechain.prevTransactionId, publicKey: trs.senderPublicKey, newTransactionId: trs.id})
+		.then(function () {
 		}).catch(function (err) {
 			library.logger.error("stack", err.stack);
 		});

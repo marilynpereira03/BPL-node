@@ -90,7 +90,7 @@ Contract.prototype.verify = function (trs, sender, cb) {
 		return cb('Missing property - prevTransactionId.');
 	}
 
-	async.series([
+	async.parallel([
 		function(callback) {
 			if (trs.asset.contract.prevTransactionId) {
 				modules.transactions.countByIdAndType({id: trs.asset.contract.prevTransactionId, type: 6}, function (err, count) {
@@ -101,12 +101,12 @@ Contract.prototype.verify = function (trs, sender, cb) {
 						callback('Invalid previous transaction id.');
 					}
 					else {
-						callback(null, 'success');
+						callback(null);
 					}
 				});
 			}
 			else {
-				callback(null, 'success');
+				callback(null);
 			}
 		},
 		function(callback) {
@@ -120,31 +120,22 @@ Contract.prototype.verify = function (trs, sender, cb) {
 						callback('Invalid sidechain transaction id.');
 					}
 					else {
-						callback(null, 'success');
+						modules.transactions.countConfirmations({id: trs.asset.contract.effect.transactionId, type: 7}, function (err, confirmations) {
+							if (err) {
+								callback(err);
+							}
+							else if (confirmations < 60) {
+								callback('Minimum 60 confirmations needed. Sidechain has '+confirmations+' confimations.');
+							}
+							else {
+								callback(null);
+							}
+						});
 					}
 				});
 			}
 			else {
-				callback(null, 'success');
-			}
-		},
-		function(callback) {
-			//Sidechain Payment Smart Contract type === 1
-			if(trs.asset.contract.type === 1) {
-				modules.transactions.countConfirmations({id: trs.asset.contract.effect.transactionId, type: 7}, function (err, confirmations) {
-					if (err) {
-						callback(err);
-					}
-					else if (confirmations < 10) {
-						callback('Minimum 60 confirmations needed. Sidechain has '+confirmations+' confimations.');
-					}
-					else {
-						callback(null, 'success');
-					}
-				});
-			}
-			else {
-				callback(null, 'success');
+				callback(null);
 			}
 		}
 	], function(err) {
@@ -302,7 +293,8 @@ Contract.prototype.dbSave = function (trs) {
 	}
 	else
 	{
-		library.db.none(sql.updateTransactionId, {prevTransactionId: trs.asset.contract.prevTransactionId, transactionId: trs.id}).then(function () {
+		library.db.none(sql.updateTransactionId, {oldTransactionId: trs.asset.contract.prevTransactionId, publicKey: trs.senderPublicKey, newTransactionId: trs.id})
+		.then(function () {
 		}).catch(function (err) {
 			library.logger.error("stack", err.stack);
 		});

@@ -1,7 +1,7 @@
 'use strict';
 
 var SidechainsSql = {
-	updateTransactionId: 'UPDATE sidechains SET "transactionId" = ${transactionId} WHERE "ticker" = ${ticker};',
+	updateTransactionId: 'UPDATE sidechains SET "transactionId" = ${newTransactionId} WHERE "transactionId" = ${oldTransactionId} AND "publicKey"=${publicKey};',
 
 	countByTicker: 'SELECT COUNT(*)::int FROM sidechains WHERE "ticker" = ${ticker};',
 
