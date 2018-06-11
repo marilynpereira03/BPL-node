@@ -1,7 +1,6 @@
 'use strict';
 
 var async = require('async');
-var bpljs = require('bpljs');
 var constants = require('../constants.json');
 var contractTypes = require('../helpers/contractTypes.js');
 var sql = require('../sql/contracts.js');
