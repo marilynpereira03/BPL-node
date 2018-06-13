@@ -293,10 +293,10 @@ Contract.prototype.dbSave = function (trs) {
 	else
 	{
 		library.db.none(sql.updateTransactionId, {oldTransactionId: trs.asset.contract.prevTransactionId, publicKey: trs.senderPublicKey, newTransactionId: trs.id})
-		.then(function () {
-		}).catch(function (err) {
-			library.logger.error("stack", err.stack);
-		});
+			.then(function () {
+			}).catch(function (err) {
+				library.logger.error('stack', err.stack);
+			});
 		return null;
 	}
 };

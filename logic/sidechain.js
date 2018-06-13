@@ -259,7 +259,7 @@ Sidechain.prototype.objectNormalize = function (trs) {
 	var asset = {
 		publicKey: trs.senderPublicKey,
 		ticker: trs.asset.sidechain.network.tokenShortName
-	}
+	};
 
 	var report = library.schema.validate(asset, Sidechain.prototype.schema);
 	if (!report) {
@@ -307,10 +307,10 @@ Sidechain.prototype.dbSave = function (trs) {
 	else
 	{
 		library.db.none(sql.updateTransactionId, {oldTransactionId: trs.asset.sidechain.prevTransactionId, publicKey: trs.senderPublicKey, newTransactionId: trs.id})
-		.then(function () {
-		}).catch(function (err) {
-			library.logger.error("stack", err.stack);
-		});
+			.then(function () {
+			}).catch(function (err) {
+				library.logger.error('stack', err.stack);
+			});
 		return null;
 	}
 };
