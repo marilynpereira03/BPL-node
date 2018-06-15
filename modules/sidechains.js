@@ -75,7 +75,7 @@ __private.getHistory = function (transactionId, limit, history, cb) {
 				__private.getHistory(rawasset.sidechain.prevTransactionId, limit, history, cb);
 			}
 			else {
-				return cb(null, history);
+				return cb(null, { 'history': history });
 			}
 		}).catch(function (err) {
 			library.logger.error('stack', err);
