@@ -7,7 +7,7 @@ var Contract = require('../logic/contract.js');
 var transactionTypes = require('../helpers/transactionTypes.js');
 var schema = require('../schema/contracts.js');
 var sql = require('../sql/contracts.js');
-var tsql = require('../sql/transactions.js')
+var tsql = require('../sql/transactions.js');
 
 // Private fields
 var modules, library, self, __private = {}, shared = {};
