@@ -57,12 +57,14 @@ __private.getHistory = function (transactionId, limit, history, cb) {
 			if (!rows.length) {
 				return cb('Contract history not found.');
 			}
+
 			var rawasset = JSON.parse(rows[0].rawasset);
 			var contract = {
-				'type': rawasset.contract.type,
-				'label': rawasset.contract.label,
-				'cause': rawasset.contract.cause,
-				'effect': rawasset.contract.effect
+				// ************************** Remove if not needed
+				// type: rawasset.contract.type,
+				// label: rawasset.contract.label,
+				trigger: rawasset.contract.trigger,
+				definition: rawasset.contract.definition,
 			};
 			history.push(contract);
 
@@ -81,6 +83,7 @@ __private.getHistory = function (transactionId, limit, history, cb) {
 		return cb(null, history);
 	}
 };
+
 
 // Public methods
 
@@ -179,6 +182,7 @@ Contracts.prototype.undoUnconfirmed = function (transaction, cb) {
 	}, cb);
 };
 
+
 // Events
 //
 //__EVENT__ `onBind`
@@ -227,14 +231,8 @@ shared.getContracts = function (req, cb) {
 
 			var contracts = [];
 			rows.forEach(function (row) {
-				var rawasset = JSON.parse(row.rawasset);
-				var contract = {
-					'type': rawasset.contract.type,
-					'label': rawasset.contract.label,
-					'cause': rawasset.contract.cause,
-					'effect': rawasset.contract.effect
-				};
-
+				var contract = JSON.parse(row.rawasset).contract;
+				delete contract.prevTransactionId;
 				contracts.push(contract);
 			});
 
@@ -259,14 +257,8 @@ shared.getContract = function (req, cb) {
 			}
 
 			var rawasset = JSON.parse(rows[0].rawasset);
-			return cb(null,  {
-				'contract': {
-					'type': rawasset.contract.type,
-					'label': rawasset.contract.label,
-					'cause': rawasset.contract.cause,
-					'effect': rawasset.contract.effect
-				}
-			});
+			delete rawasset.contract.prevTransactionId;
+			return cb(null, rawasset);
 		}).catch(function (err) {
 			library.logger.error('stack', err);
 			return cb('Contracts#get error');

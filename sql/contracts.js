@@ -5,7 +5,7 @@ var ContractsSql = {
 
 	getByPublicKey: 'SELECT "rawasset" FROM transactions WHERE "id" IN (SELECT "transactionId" FROM contracts WHERE "publicKey" = ${publicKey});',
 
-	getByAddress: 'SELECT "rawasset" FROM transactions WHERE "id" IN (SELECT "transactionId" FROM contracts WHERE "accountId" = ${address});'
+	getByAddress: 'SELECT "rawasset" FROM transactions WHERE "id" IN (SELECT "transactionId" FROM contracts WHERE "triggerAddress" = ${address});'
 };
 
 module.exports = ContractsSql;

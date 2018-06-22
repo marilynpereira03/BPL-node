@@ -12,28 +12,39 @@ var modules, __private = {}, library;
 function Contract () {}
 
 // Private menthods
-__private.validateFields = function (type, cause, effect) {
-	type = ''+type;
-
-	if(contractTypes[type]) {
-		var causeProps = contractTypes[type].cause;
-		var effectProps = contractTypes[type].effect;
-
-		for(var i=0; i<causeProps.length; i++) {
-			if(!cause[causeProps[i]])
-				return 'Invalid '+causeProps[i]+' asset.';
+__private.validateCauses = function (causes) {
+	var msg = null;
+	causes.forEach(function(cause) {
+		switch(cause.id) {
+		case 1: if(cause.confirmations === undefined || cause.confirmations !== 0) {
+			msg = 'Invalid confirmations for Cause 1 Type - '+contractTypes.causes[cause.id].type;
 		}
-
-		for(var j=0; j<effectProps.length; j++) {
-			if(!effect[effectProps[j]])
-				return 'Invalid '+effectProps[j]+' asset.';
+			break;
+		case 2: if(cause.confirmations === undefined || cause.confirmations <= 0) {
+			msg = 'Invalid confirmations for Cause 2 Type - '+contractTypes.causes[cause.id].type;
 		}
-
-		return null;
-	}
-	return 'Invalid type asset.';
+			break;
+		case 3: if(cause.balanceLimit === undefined) {
+			msg = 'Invalid balance limit for Cause 3 Type - '+contractTypes.causes[cause.id].type;
+		}
+			break;
+		case 4: if(!cause.senderId) {
+			msg = 'Invalid sender id for Cause 4 Type - '+contractTypes.causes[cause.id].type;
+		}
+			break;
+		case 5: if(cause.amount === undefined) {
+			msg = 'Invalid amount for Cause 5 Type - '+contractTypes.causes[cause.id].type;
+		}
+			break;
+			//this will be a effect not cause
+		// case 10: if(!cause.sidechainId) {
+		// 	msg = 'Invalid sidechain id for Cause 10 Type - '+contractTypes.causes[cause.id].type;
+		// }
+		// 	break;
+		}
+	});
+	return msg;
 };
-
 
 
 // Public methods
@@ -72,79 +83,86 @@ Contract.prototype.verify = function (trs, sender, cb) {
 	if (!trs.asset || !trs.asset.contract) {
 		return cb('Invalid transaction asset.');
 	}
-	if (!trs.asset.contract.type) {
-		return cb('Invalid type asset.');
+	// ************************** Remove if not needed
+	// if (!trs.asset.contract.type) {
+	// 	return cb('Invalid type asset.');
+	// }
+	if (!trs.asset.contract.trigger && trs.asset.contract.trigger.length) {
+		return cb('Invalid trigger asset.');
 	}
-	if (!trs.asset.contract.cause) {
-		return cb('Invalid cause asset.');
+	if (!trs.asset.contract.definition) {
+		return cb('Invalid definition asset.');
 	}
-	if (!trs.asset.contract.effect) {
-		return cb('Invalid effect asset.');
+	if (!trs.asset.contract.definition.causes) {
+		return cb('Invalid causes asset.');
 	}
-	var msg = __private.validateFields(trs.asset.contract.type, trs.asset.contract.cause, trs.asset.contract.effect);
+	if (!trs.asset.contract.definition.effects) {
+		return cb('Invalid effects asset.');
+	}
+	var msg = __private.validateCauses(trs.asset.contract.definition.causes);
 	if(msg) {
 		return cb(msg);
 	}
-	if (!trs.asset.contract.hasOwnProperty('prevTransactionId')) {
-		return cb('Missing property - prevTransactionId.');
+	if (trs.asset.contract.prevTransactionId === undefined) {
+		return cb('Invalid prevTransactionId asset.');
 	}
-
-	async.parallel([
-		function(callback) {
-			if (trs.asset.contract.prevTransactionId) {
-				modules.transactions.countByIdAndType({id: trs.asset.contract.prevTransactionId, type: 6}, function (err, count) {
-					if (err) {
-						callback(err);
-					}
-					else if (!count) {
-						callback('Invalid previous transaction id.');
-					}
-					else {
-						callback(null);
-					}
-				});
-			}
-			else {
-				callback(null);
-			}
-		},
-		function(callback) {
-			//Sidechain Payment Smart Contract Type === 1
-			if(trs.asset.contract.type === 1 && trs.asset.contract.effect.transactionId) {
-				modules.transactions.countByIdAndType({id: trs.asset.contract.effect.transactionId, type: 7}, function (err, count) {
-					if (err) {
-						callback(err);
-					}
-					else if (!count) {
-						callback('Invalid sidechain transaction id.');
-					}
-					else {
-						modules.transactions.countConfirmations({id: trs.asset.contract.effect.transactionId, type: 7}, function (err, confirmations) {
-							if (err) {
-								callback(err);
-							}
-							else if (confirmations < 60) {
-								callback('Minimum 60 confirmations needed. Sidechain has '+confirmations+' confirmations.');
-							}
-							else {
-								callback(null);
-							}
-						});
-					}
-				});
-			}
-			else {
-				callback(null);
-			}
-		}
-	], function(err) {
-		if(err) {
-			return cb(err);
-		}
-		else {
-			return cb(null, trs);
-		}
-	});
+	return cb(null, trs);
+	// async.parallel([
+	// 	function(callback) {
+	// 		if (trs.asset.contract.prevTransactionId) {
+	// 			modules.transactions.countByIdAndType({id: trs.asset.contract.prevTransactionId, type: 6}, function (err, count) {
+	// 				if (err) {
+	// 					callback(err);
+	// 				}
+	// 				else if (!count) {
+	// 					callback('Invalid previous transaction id.');
+	// 				}
+	// 				else {
+	// 					callback(null);
+	// 				}
+	// 			});
+	// 		}
+	// 		else {
+	// 			callback(null);
+	// 		}
+	// 	},
+	// 	function(callback) {
+	// 		//Sidechain Payment Smart Contract Type === 1
+	// 		if(trs.asset.contract.type === 1 && trs.asset.contract.effect.transactionId) {
+	// 			modules.transactions.countByIdAndType({id: trs.asset.contract.effect.transactionId, type: 7}, function (err, count) {
+	// 				if (err) {
+	// 					callback(err);
+	// 				}
+	// 				else if (!count) {
+	// 					callback('Invalid sidechain transaction id.');
+	// 				}
+	// 				else {
+	// 					modules.transactions.countConfirmations({id: trs.asset.contract.effect.transactionId, type: 7}, function (err, confirmations) {
+	// 						if (err) {
+	// 							callback(err);
+	// 						}
+	// 						else if (confirmations < 2) {
+	// 							callback('Minimum 60 confirmations needed. Sidechain has '+confirmations+' confirmations.');
+	// 						}
+	// 						else {
+	// 							callback(null);
+	// 						}
+	// 					});
+	// 				}
+	// 			});
+	// 		}
+	// 		else {
+	// 			callback(null);
+	// 		}
+	// 	}
+	// ], function(err) {
+	// 	if(err) {
+	// 		return cb(err);
+	// 	}
+	// 	else {
+	// 		return cb(null, trs);
+	// 	}
+	// });
 };
 
 //
@@ -241,7 +259,7 @@ Contract.prototype.schema = {
 Contract.prototype.objectNormalize = function (trs) {
 	var asset = {
 		publicKey: trs.senderPublicKey,
-		address: trs.asset.contract.cause.address
+		address: trs.asset.contract.trigger[0]
 	};
 
 	var report = library.schema.validate(asset, Contract.prototype.schema);
@@ -270,7 +288,7 @@ Contract.prototype.dbRead = function (raw) {
 Contract.prototype.dbTable = 'contracts';
 
 Contract.prototype.dbFields = [
-	'accountId',
+	'triggerAddress',
 	'publicKey',
 	'transactionId',
 	'isActive'
@@ -283,7 +301,7 @@ Contract.prototype.dbSave = function (trs) {
 			table: this.dbTable,
 			fields: this.dbFields,
 			values: {
-				accountId: trs.asset.contract.cause.address,
+				triggerAddress: trs.asset.contract.trigger[0],
 				publicKey: trs.senderPublicKey,
 				transactionId: trs.id,
 				isActive: true
