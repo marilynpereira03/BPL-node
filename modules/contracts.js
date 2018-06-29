@@ -8,6 +8,7 @@ var transactionTypes = require('../helpers/transactionTypes.js');
 var schema = require('../schema/contracts.js');
 var sql = require('../sql/contracts.js');
 var tsql = require('../sql/transactions.js');
+var contractTypes = require('../helpers/contractTypes.js');
 
 // Private fields
 var modules, library, self, __private = {}, shared = {};
@@ -84,7 +85,105 @@ __private.getHistory = function (transactionId, limit, history, cb) {
 	}
 };
 
+// ************************** check where this function should be written
+// ************** check if triggering tx already exists in table
+__private.saveTriggeringTx = function(triggeringTxId, address, height, confirmation) {
+	console.log('>>>>>>>>>>>>>>> saveTriggeringTx',triggeringTxId, address, height, confirmation);
+	library.db.query(sql.insertTriggeringTx, {
+		// transactionId: contractTxId,
+		transactionId: triggeringTxId,
+		address: address,
+		confirmationHeight: (height + confirmation)
+	}).then(function (rows) {
 
+	}).catch(function (err) {
+		library.logger.error('stack', err);
+	});
+};
+
+__private.getTriggeringTxs = function(height, cb) {
+	console.log('>>>>>>>>>>>>>>>>>> getTriggeringTxs height: ', height);
+	library.db.query(sql.getTriggeringTxs, {
+		height: height
+	}).then(function (rows) {
+			console.log('>>>>>>>>>>>>>>>>>> getTriggeringTxs found: ', rows);
+			cb(null, rows);
+	}).catch(function (err) {
+		library.logger.error('stack', err);
+	});
+};
+
+__private.validateCauses = function(triggeringTx, causes, height) {
+	var isValid = true;
+	for(var i = 0; i < causes.length; i++) {
+	//causes.forEach(function (cause) {
+		switch(causes[i].id) {
+		case 1: if(triggeringTx.confirmation !== 0) {
+			isValid = false;
+		}
+			console.log('case 1 ',isValid);
+			break;
+		case 2: if(triggeringTx.confirmation !== causes[i].confirmation)
+			__private.saveTriggeringTx(triggeringTx.id, triggeringTx.recipientId, height, causes[i].confirmation);
+			isValid = false;
+			console.log('case 2 ',isValid);
+			break;
+		case 3: if (triggeringTx.balance > causes[i].balanceLimit) {
+			isValid = false;
+		}
+			console.log('case 3 ',isValid, triggeringTx.balance, causes[i].balanceLimit);
+			break;
+		case 4: if (triggeringTx.senderId !== causes[i].senderId) {
+			isValid = false;
+		}
+			console.log('case 4 ',isValid);
+			break;
+		case 5: if (triggeringTx.amount !== causes[i].amount) {
+			isValid = false;
+		}
+			console.log('case 5', isValid, triggeringTx.amount, causes[i].amount);
+			break;
+		}
+		if(!isValid) {
+			break;
+		}
+	}
+	return isValid;
+	//changeto forecah **************
+	// async.eachSeries(causes, function(cause, cb) {
+	// 	console.log('>>>>>>>>>>>>>> ',cause);
+	// 	switch(cause.id) {
+	// 	case 1: if (cause.confirmation !== 0) {
+	// 	cb('CAUSE_1 failed');
+	// }
+	// 		break;
+	// 	case 2: __private.savePendingContract(id, contract, triggeringTx);
+	// 		cb('CAUSE_2');
+	// 		break;
+	// 	case 3: if(cause.balanceLimit && tx.balance > cause.balanceLimit) { //if(tx.balance > cause.balanceLimit)
+	// 		cb('CAUSE_3');
+	// 	}
+	// 		break;
+	// 	case 4: if(cause.senderId && tx.senderId !== cause.senderId) {
+	// 		cb('CAUSE_4');
+	// 	}
+	// 		break;
+	// 	case 5: if(cause.amount && tx.amount !== cause.amount) {
+	// 		cb('CAUSE_5');
+	// 	}
+	// 		break;
+	// 	}
+	// },
+	// function(err) {
+	// 	if(err) {
+	// 		console.log('?>>>>>>>>>>>>>>>>>>>>> Contract cuases notmatch');
+	//
+	// 	}
+	// 	else {
+	// 		console.log('Send JSON to webhook');
+	// 	}
+	// });
+};
 // Public methods
 
 //
@@ -182,7 +281,123 @@ Contracts.prototype.undoUnconfirmed = function (transaction, cb) {
 	}, cb);
 };
 
+//
+//__API__ `checkContracts`
 
+//
+Contracts.prototype.checkContractsToExecute = function (height, transactions) {
+	console.log('>>>>>>>>>>>>>>>>>> In checkContractsToExecute height: ',height);
+
+	async.parallel([
+		function(callback) {
+			var verifiedTriggeringTxs = [];
+			async.each(transactions, function(transaction, cb) {
+				console.log('>>>>>>>>>>>>>>>>>> ',transaction.label, transaction.id, transaction.recipientId);
+				if(transaction.type === 0) {
+					//get contracts for specific address
+					library.db.query(sql.getByTriggerAddress, {triggerAddress: transaction.recipientId}).then(function (contracts) {
+						console.log('>>>>>>>>>>>>>>>>>> contracts '+contracts.length+ ' found for '+transaction.id+ ' '+ transaction.recipientId);
+						//contracts.forEach(function(data) {
+							for(var i = 0; i < contracts.length; i++) {
+							var rawasset = JSON.parse(contracts[i].rawasset);
+							console.log('>>>>>>>>>>>>>>>>>> contracts asset ',JSON.stringify(rawasset.contract.definition.causes));
+							var result = __private.validateCauses(transaction, rawasset.contract.definition.causes, height);
+							console.log('>>>>>>>>>>>>>>>>>> contracts validation result',result);
+							if(result) {
+								verifiedTriggeringTxs.push({transactionId: transaction.id, address: transaction.recipientId});
+								break;
+							}
+						};
+						cb();
+					}).catch(function (err) {
+						//need to handle if error occurs then the trigerring transacvtion should not be lost
+						library.logger.error('stack', err);
+						cb(err);
+					});
+				}
+				else {
+					cb();
+				}
+			},
+			function(err) {
+				if(!err) {
+					console.log('>>>>>>>>>>>>>>>>>> BLOCK: verified triggering tx ', verifiedTriggeringTxs);
+					callback(null, verifiedTriggeringTxs);
+					verifiedTriggeringTxs = [];
+				}
+				else {
+					callback(err);
+				}
+			});
+		},
+		function(callback) {
+			var verifiedTriggeringTxs = [];
+			__private.getTriggeringTxs(height, function (err, res) {
+				if(!err) {
+					console.log('>>>>>>>>>>>>>>>>>> PENDING: verified triggering tx ', verifiedTriggeringTxs);
+					callback(null, res);
+				}
+				else {
+					callback(err);
+				}
+			});
+		},
+	], function(err, res) {
+		console.log('FINAL: ', err,res);
+		if(!err) {
+			// console.log('>>>>>>>>>>>> Webhook',res);
+		}
+	});
+// async.each(transactions, function(transaction, cb) {
+// 	console.log('>>>>>>>>>>>>>>>>>> ',transaction.label);
+// 	if(transaction.type === 0) {
+// 		//get contracts for specific address
+// 		library.db.query(sql.getByTriggerAddress, {triggerAddress: transaction.recipientId}).then(function (contracts) {
+// 			console.log('>>>>>>>>>>>>>>>>>> contracts found ',contracts.length);
+// 			contracts.forEach(function(data) {
+// 				var rawasset = JSON.parse(data.rawasset);
+// 				console.log('>>>>>>>>>>>>>>>>>> contracts asset ',JSON.stringify(rawasset.contract.definition.causes, null, 2));
+// 				var result = __private.validateCauses(transaction, rawasset.contract.definition.causes, height);
+// 				console.log('>>>>>>>>>>>>>>>>>> validateCauses result',result, typeof(result));
+// 				if(result) {
+// 					fulfilledContracts.push({id: transaction.id, triggerAddress: transaction.recipientId});
+// 				}
+// 			});
+// 			cb();
+// 		}).catch(function (err) {
+// 			//need to handle if error occurs then the trigerring transacvtion should not be lost
+// 			library.logger.error('stack', err);
+// 			cb(err);
+// 		});
+// 	}
+// 	else {
+// 		cb();
+// 	}
+// },
+// function(err) {
+// 	if(!err) {
+// 		if(fulfilledContracts.length) {
+// 		console.log('>>>>>>>>>>>>>>>> Suuccess send to webhook', fulfilledContracts);
+// 		fulfilledContracts = [];
+// 		}
+//
+// 		// getConfirmedTriggeringTxs(height, function(err, res) {
+// 		// 	if(!err) {
+// 		// 		//merge arr1 & arr2 and send to webhook
+// 		// 	}
+// 		// });
+// 	}
+// });
+};
+
+__private.getConfirmedTriggeringTxs = function (height, cb) {
+	library.db.query(sql.getConfirmedTriggeringTxs, {triggerAddress: transaction.recipientId}).then(function (rows) {
+		cb(null, rows);
+	}).catch(function (err) {
+		library.logger.error('stack', err);
+		cb(err);
+	});
+};
 // Events
 //
 //__EVENT__ `onBind`
@@ -216,8 +431,8 @@ shared.getContracts = function (req, cb) {
 			errMsg = 'Contracts not found: ' +req.body.publicKey;
 		}
 		else if(req.body.address) {
-			query = sql.getByAddress;
-			params = {address: req.body.address};
+			query = sql.getByTriggerAddress;
+			params = {triggerAddress: req.body.address};
 			errMsg = 'Contracts not found: ' +req.body.address;
 		}
 		else {

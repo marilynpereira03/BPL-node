@@ -4,11 +4,11 @@ module.exports = {
 	causes: {
 		1: {
 			type: 'Zero confirmation',
-			property: 'confirmations'
+			property: 'confirmation'
 		},
 		2: {
 			type: 'Confirmed',
-			property: 'confirmations'
+			property: 'confirmation'
 		},
 		3: {
 			type: 'Balanced breached',

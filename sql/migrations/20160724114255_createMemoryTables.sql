@@ -83,6 +83,12 @@ CREATE TABLE IF NOT EXISTS "contracts"(
   "isActive" VARCHAR(5) NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS "triggering_transactions"(
+  "transactionId" VARCHAR(64) NOT NULL,
+  "address" VARCHAR(36) NOT NULL,
+  "confirmationHeight" INT NOT NULL
+);
+
 CREATE INDEX IF NOT EXISTS "mem_delegates_vote" ON "mem_delegates"("vote");
 
 CREATE INDEX IF NOT EXISTS "mem_delegates_round" ON "mem_delegates"("round");

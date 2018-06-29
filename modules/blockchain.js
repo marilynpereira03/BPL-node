@@ -258,6 +258,16 @@ Blockchain.prototype.getLastBlock = function(){
   return __private.lastBlock;
 };
 
+//
+//__API__ `getHeight`
+
+// return current height of the blockchain
+// Blockchain.prototype.getHeight = function(){
+// 	var block=this.getLastBlock();
+//
+// 	return {height: block.height, id:block.id};
+// };
+
 // should we have received a new block by now?
 // fast
 //

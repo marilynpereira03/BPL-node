@@ -1,13 +1,13 @@
 'use strict';
 
 var constants = require('../constants.json');
-var memAccountsSQL = require('../sql/memAccounts.js');
+var memAccountsSQL = require('../sql/memAccounts.js');;
 var blocksSQL = require('../sql/blocks.js');
 var delegateSQL = require('../sql/delegates.js');
-var bigdecimal = require('bigdecimal');
+var bigdecimal = require("bigdecimal");
 
 // Private fields
-var modules, library, __private = {};
+var __private = {};
 
 // Constructor
 function BlockReward () {
@@ -76,31 +76,32 @@ BlockReward.prototype.calcPercentageForMilestone = function (height) {
 //
 BlockReward.prototype.customCalcReward = function (dependentId, height, cb) {
 	var milestone = this.calcMilestone(height);
-	var zeroReward ='0.0000000000';
+	var zeroReward ="0.0000000000";
 	var down = bigdecimal.RoundingMode.DOWN();
 
-	if(height >= this.rewardOffset) {
-		if(constants.rewards.type === 'proportional') {
+		var rewardAmount = new bigdecimal.BigDecimal("0.0000000000");
+		if(height >= this.rewardOffset) {
+			if(constants.rewards.type === "proportional") {
 			//last milestone
-			if(milestone === (constants.rewards.milestones.length - 1)) {
-				if(constants.rewards.fixedLastReward && typeof(constants.rewards.fixedLastReward) === 'number') {
-					var fixedReward = new bigdecimal.BigDecimal(''+constants.rewards.fixedLastReward);
-					fixedReward = fixedReward.setScale(10, down);
-					return cb(null, fixedReward.toString());
+				if(milestone === (constants.rewards.milestones.length - 1)) {
+					if(constants.rewards.fixedLastReward && typeof(constants.rewards.fixedLastReward) === "number") {
+						var fixedReward = new bigdecimal.BigDecimal(""+constants.rewards.fixedLastReward);
+						fixedReward = fixedReward.setScale(10, down);
+						return cb(null, fixedReward.toString());
+					}
+					else
+						this.getProportionalReward(dependentId, height, cb);
 				}
 				else
-					this.getProportionalReward(dependentId, height, cb);
+						this.getProportionalReward(dependentId, height, cb);
+				}
+				else if(constants.rewards.type === "static"){
+					this.getStaticReward(height, cb);
+				}
 			}
-			else
-				this.getProportionalReward(dependentId, height, cb);
-		}
-		else if(constants.rewards.type === 'static'){
-			this.getStaticReward(height, cb);
-		}
-	}
-	else {
-		return cb(null, zeroReward);
-	}
+			else {
+				return cb(null, zeroReward);
+			}
 };
 
 BlockReward.prototype.getStaticReward = function (height, cb) {
@@ -108,7 +109,7 @@ BlockReward.prototype.getStaticReward = function (height, cb) {
 	var rewardAmount = new bigdecimal.BigDecimal(''+this.milestones[this.calcMilestone(height)]);
 	rewardAmount = rewardAmount.setScale(10, down);
 	return cb(null, rewardAmount.toString());
-};
+}
 
 BlockReward.prototype.getProportionalReward = function (dependentId, height, cb) {
 	var zeroReward ='0.0000000000';
@@ -123,65 +124,65 @@ BlockReward.prototype.getProportionalReward = function (dependentId, height, cb)
 			var accountIds = voters[0].accountIds;
 
 			for(let i = 0; i < accountIds.length; i++ ) {
-				var counter = 0;
+					var counter = 0;
 				//get no of votes of this voter
-				library.db.query(delegateSQL.getNoOfVotes, { accountId:accountIds[i] }).then(function (votes) {
-					//get balance of each of the voters
-					library.db.query(memAccountsSQL.getBalance, { address:accountIds[i] }).then(function (voter) {
-						counter++;
-						if (voter.length > 0) {
-							try {
-								var balance = new bigdecimal.BigDecimal(''+voter[0].balance);
-								balance =  balance.setScale(10, down);
+					library.db.query(delegateSQL.getNoOfVotes, { accountId:accountIds[i] }).then(function (votes) {
+							//get balance of each of the voters
+							library.db.query(memAccountsSQL.getBalance, { address:accountIds[i] }).then(function (voter) {
+								counter++;
+								if (voter.length > 0) {
+										try {
+											var balance = new bigdecimal.BigDecimal(''+voter[0].balance);
+											balance =  balance.setScale(10, down);
 
-								var count = new bigdecimal.BigDecimal(''+votes[0].count);
-								count =  count.setScale(10, down);
+											var count = new bigdecimal.BigDecimal(''+votes[0].count);
+											count =  count.setScale(10, down);
 
-								var voteWeight = balance.divide(count, 10, down);
-								voteWeight =  voteWeight.setScale(10, down);
+											var voteWeight = balance.divide(count, 10, down);
+											voteWeight =  voteWeight.setScale(10, down);
 
-								//sum up balance of all voters
-								votersTotalBalance = votersTotalBalance.add(voteWeight);
-								votersTotalBalance =  votersTotalBalance.setScale(10, down);
-							} catch (e) {
-								library.logger.error(e);
-								return cb(e);
-							}
+											//sum up balance of all voters
+											votersTotalBalance = votersTotalBalance.add(voteWeight);
+											votersTotalBalance =  votersTotalBalance.setScale(10, down);
+										} catch (e) {
+											library.logger.error(e);
+											return cb(e);
+										}
 
-							if(counter === accountIds.length) {
-								//calculate reward amount based on current milestone percentage
-								var bigDecimalPercent = new bigdecimal.BigDecimal(percent);
-								var rewardAmount = new bigdecimal.BigDecimal('0.0000000000');
-								rewardAmount =  votersTotalBalance.multiply(bigDecimalPercent);
-								rewardAmount =  rewardAmount.setScale(10, down);
-								rewardAmount = rewardAmount.toString();
+										if(counter === accountIds.length) {
+											//calculate reward amount based on current milestone percentage
+											var bigDecimalPercent = new bigdecimal.BigDecimal(percent);
+											var rewardAmount = new bigdecimal.BigDecimal('0.0000000000');
+											rewardAmount =  votersTotalBalance.multiply(bigDecimalPercent);
+											rewardAmount =  rewardAmount.setScale(10, down);
+											rewardAmount = rewardAmount.toString();
 
-								if(rewardAmount == '0E-10')
-									return cb (null, zeroReward);
-								return cb(null, rewardAmount);
-							}
-						}
+											if(rewardAmount == '0E-10')
+												return cb (null, zeroReward);
+											return cb(null, rewardAmount);
+										}
+									}
 
+								}).catch(function (err) {
+									library.logger.error(err);
+									return cb(err);
+								});
 					}).catch(function (err) {
 						library.logger.error(err);
 						return cb(err);
 					});
-				}).catch(function (err) {
-					library.logger.error(err);
-					return cb(err);
-				});
 
+				}
 			}
-		}
-		else {
-			library.logger.info('Couldn\'t find any voters for delegate: ',dependentId);
-			return cb(null, zeroReward);
-		}
+			else {
+				library.logger.info('Couldn\'t find any voters for delegate: ',dependentId);
+				return cb(null, zeroReward);
+			}
 	}).catch(function (err) {
 		library.logger.error(err);
 		return cb(err);
 	});
-};
+}
 //
 //__API__ `calcRewardForHeight`
 // calculates reward given for specific block height
@@ -190,7 +191,7 @@ BlockReward.prototype.calcRewardForHeight = function (height, cb) {
 	height = __private.parseHeight(height);
 
 	if (height < this.rewardOffset) {
-		return cb(null, {height: height, reward: '0'});
+		return cb(null, {height: height, reward: "0"});
 	} else {
 		library.db.query(blocksSQL.getRewardByHeight, { height: height }).then(function (result) {
 			if(result.length > 0)
@@ -208,7 +209,7 @@ BlockReward.prototype.calcRewardForHeight = function (height, cb) {
 //calculates the total supply in the Blockchain at specific height
 //
 BlockReward.prototype.calcSupply = function(height, cb){
-	if(constants.rewards.type === 'proportional') {
+	if(constants.rewards.type === "proportional") {
 		library.db.query(blocksSQL.getSupplyByHeight, { height: height }).then(function (result) {
 			if(result.length > 0){
 				return cb(null, result[0].supply);

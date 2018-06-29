@@ -96,6 +96,17 @@ CREATE TABLE IF NOT EXISTS "peers"(
   "clock" BIGINT
 );
 
+CREATE TABLE IF NOT EXISTS "causes"(
+  "id" SERIAL NOT NULL PRIMARY KEY,
+  "type" VARCHAR(50)
+);
+
+CREATE TABLE IF NOT EXISTS "effects"(
+  "id" SERIAL NOT NULL PRIMARY KEY,
+  "type" VARCHAR(50)
+);
+
+
 /* Unique Indexes */
 CREATE UNIQUE INDEX IF NOT EXISTS "blocks_height" ON "blocks"("height");
 CREATE UNIQUE INDEX IF NOT EXISTS "blocks_previousBlock" ON "blocks"("previousBlock");

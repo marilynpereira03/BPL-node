@@ -502,12 +502,46 @@ __private.applyGenesisTransaction = function (block, transaction, sender, cb) {
 	});
 };
 
+// Apply the genesis block, provided it has been verified.
+// Shortcuting the unconfirmed/confirmed states.
+__private.applyGenesisBlock = function (block, cb) {
+	block.transactions = block.transactions.sort(function (a, b) {
+		if (a.type === transactionTypes.VOTE) {
+			return 1;
+		} else {
+			return 0;
+		}
+	});
+	async.eachSeries(block.transactions, function (transaction, cb) {
+			modules.accounts.setAccountAndGet({publicKey: transaction.senderPublicKey}, function (err, sender) {
+				if (err) {
+					return cb({
+						message: err,
+						transaction: transaction,
+						block: block
+					});
+				}
+				__private.applyGenesisTransaction(block, transaction, sender, cb);
+			});
+	}, function (err) {
+		if (err) {
+			// If genesis block is invalid, kill the node...
+			library.logger.fatal("Can't validate load genesis block");
+			library.logger.fatal("Error", err);
+			return process.exit(0);
+		} else {
+			modules.rounds.tick(block, cb);
+		}
+	});
+};
+
 // Public methods
 //
 //__API__ `lastReceipt`
 
 //
 Blocks.prototype.lastReceipt = function (lastReceipt) {
+	console.log('---------------------------- lastReceipt');
 	if(lastReceipt){
 		__private.lastReceipt = lastReceipt;
 	}
@@ -543,6 +577,7 @@ Blocks.prototype.lastReceipt = function (lastReceipt) {
 
 //
 Blocks.prototype.getTransactionsFromIds = function(blockid, ids, cb){
+	console.log('---------------------------- getTransactionsFromIds');
 	__private.getById(blockid, function (err, block) {
 		if (!block || err) {
 			return cb('Block not found');
@@ -562,6 +597,7 @@ Blocks.prototype.getTransactionsFromIds = function(blockid, ids, cb){
 
 //
 Blocks.prototype.getCommonBlock = function (peer, height, cb) {
+	console.log('---------------------------- getCommonBlock');
 	async.waterfall([
 		function (waterCb) {
 			__private.getIdSequence(height, function (err, res) {
@@ -611,6 +647,7 @@ Blocks.prototype.getCommonBlock = function (peer, height, cb) {
 
 //
 Blocks.prototype.count = function (cb) {
+	console.log('---------------------------- count');
 	library.db.query(sql.countByRowId).then(function (rows) {
 		var res = rows.length ? rows[0].count : 0;
 
@@ -626,6 +663,7 @@ Blocks.prototype.count = function (cb) {
 
 //
 Blocks.prototype.loadBlocksData = function (filter, options, cb) {
+	console.log('---------------------------- loadBlocksData');
 	if (arguments.length < 3) {
 		cb = options;
 		options = {};
@@ -669,6 +707,7 @@ Blocks.prototype.loadBlocksData = function (filter, options, cb) {
 
 //
 Blocks.prototype.loadBlocksPart = function (filter, cb) {
+	console.log('---------------------------- loadBlocksPart');
 	self.loadBlocksData(filter, function (err, rows) {
 		var blocks = [];
 
@@ -685,6 +724,7 @@ Blocks.prototype.loadBlocksPart = function (filter, cb) {
 
 //
 Blocks.prototype.loadBlocksOffset = function (limit, offset, verify, cb) {
+	console.log('---------------------------- loadBlocksPart');
 	var newLimit = limit + (offset || 0);
 	var params = { limit: newLimit, offset: offset || 0 };
 
@@ -749,6 +789,7 @@ Blocks.prototype.loadBlocksOffset = function (limit, offset, verify, cb) {
 
 //
 Blocks.prototype.removeSomeBlocks = function(numbers, cb){
+	console.log('---------------------------- removeSomeBlocks');
 	if (modules.blockchain.getLastBlock().height === 1) {
 		return cb();
 	}
@@ -798,6 +839,7 @@ Blocks.prototype.removeSomeBlocks = function(numbers, cb){
 
 //
 Blocks.prototype.removeLastBlock = function(cb){
+	console.log('---------------------------- removeLastBlock');
 	if (modules.blockchain.getLastBlock().height === 1) {
 		return cb();
 	}
@@ -834,6 +876,7 @@ Blocks.prototype.removeLastBlock = function(cb){
 
 // get the last block from the db
 Blocks.prototype.loadLastBlock = function (cb) {
+	console.log('---------------------------- loadLastBlock');
 	library.dbSequence.add(function (cb) {
 		library.db.query(sql.loadLastBlock).then(function (rows) {
 			var block=rows[0];
@@ -857,6 +900,7 @@ Blocks.prototype.loadLastBlock = function (cb) {
 
 //
 Blocks.prototype.getLastBlock = function () {
+	console.log('---------------------------- getLastBlock');
 	var lastBlock = modules.blockchain.getLastBlock();
 
 	if (lastBlock) {
@@ -876,6 +920,7 @@ Blocks.prototype.getLastBlock = function () {
 
 //
 Blocks.prototype.onVerifyBlock = function (block, cb) {
+	console.log('---------------------------- onVerifyBlock');
 	var result = self.verifyBlock(block, true);
 
 	if(result.verified){
@@ -892,6 +937,7 @@ Blocks.prototype.onVerifyBlock = function (block, cb) {
 // TODO: verify transactions if transactionIds is present
 // should be equivalent to full verification
 Blocks.prototype.verifyBlockHeader = function (block) {
+	console.log('---------------------------- verifyBlockHeader');
 	var result = { verified: false, errors: [] };
 	if(!block.transactions){
 		block.transactions=[];
@@ -966,6 +1012,7 @@ Blocks.prototype.verifyBlockHeader = function (block) {
 
 //
 Blocks.prototype.verifyBlock = function (block, checkPreviousBlock) {
+	console.log('---------------------------- verifyBlock');
 	var result = { verified: false, errors: [] };
 
 	try {
@@ -1108,12 +1155,11 @@ Blocks.prototype.verifyBlock = function (block, checkPreviousBlock) {
 
 // Apply the block, provided it has been verified.
 __private.applyBlock = function (block, cb) {
-
 	// Prevent shutdown during database writes.
 	__private.noShutdownRequired = true;
 
 	// Transactions to rewind in case of error.
-	var appliedUnconfirmedTransactions = {}, appliedTransactions = {};
+	var appliedUnconfirmedTransactions = {}, appliedTransactions = {}, appliedTransactionsArr = [];
 
 	// List of currrently unconfirmed transactions that have been popped and unconfirmed transactions from the block already present in the node
 	var removedTransactionsIds, keptTransactions;
@@ -1185,6 +1231,7 @@ __private.applyBlock = function (block, cb) {
 						return eachSeriesCb(err);
 					}
 					appliedTransactions[transaction.id] = transaction;
+					appliedTransactionsArr.push(transaction);
 					// Transaction applied, removed from the unconfirmed list.
 					modules.transactionPool.removeUnconfirmedTransaction(transaction.id);
 					return eachSeriesCb();
@@ -1211,10 +1258,9 @@ __private.applyBlock = function (block, cb) {
 	}, function (err) {
 		// Allow shutdown, database writes are finished.
 		__private.noShutdownRequired = false;
-
 		// Nullify large objects.
 		// Prevents memory leak during synchronisation.
-		keptTransactions = appliedTransactions = appliedUnconfirmedTransactions = removedTransactionsIds = block = null;
+		keptTransactions = appliedTransactions = appliedUnconfirmedTransactions = removedTransactionsIds = null;
 
 		if(err){
 			modules.nodeManager.fixDatabase(function(error){
@@ -1225,39 +1271,11 @@ __private.applyBlock = function (block, cb) {
 				return cb(err);
 			});
 		}
-		else return cb();
-	});
-};
-
-// Apply the genesis block, provided it has been verified.
-// Shortcuting the unconfirmed/confirmed states.
-__private.applyGenesisBlock = function (block, cb) {
-	block.transactions = block.transactions.sort(function (a, b) {
-		if (a.type === transactionTypes.VOTE) {
-			return 1;
-		} else {
-			return 0;
-		}
-	});
-	async.eachSeries(block.transactions, function (transaction, cb) {
-			modules.accounts.setAccountAndGet({publicKey: transaction.senderPublicKey}, function (err, sender) {
-				if (err) {
-					return cb({
-						message: err,
-						transaction: transaction,
-						block: block
-					});
-				}
-				__private.applyGenesisTransaction(block, transaction, sender, cb);
-			});
-	}, function (err) {
-		if (err) {
-			// If genesis block is invalid, kill the node...
-			library.logger.fatal("Can't validate load genesis block");
-			library.logger.fatal("Error", err);
-			return process.exit(0);
-		} else {
-			modules.rounds.tick(block, cb);
+		else {
+			//check if sync/async ?????????????????????????????
+			modules.contracts.checkContractsToExecute(block.height, appliedTransactionsArr);
+			appliedTransactionsArr = block = null;
+			return cb();
 		}
 	});
 };
@@ -1270,6 +1288,7 @@ __private.applyGenesisBlock = function (block, cb) {
 
 //
 Blocks.prototype.processBlock = function (block, cb) {
+	console.log('---------------------------- processBlock');
 	if (__private.cleanup) {
 		return cb('Cleaning up');
 	}
@@ -1371,6 +1390,7 @@ Blocks.prototype.processBlock = function (block, cb) {
 
 //
 Blocks.prototype.processEmptyBlock = function (block, cb) {
+		console.log('---------------------------- processEmptyBlock');
 	if (__private.cleanup) {
 		return cb('Cleaning up');
 	}
@@ -1408,6 +1428,7 @@ Blocks.prototype.processEmptyBlock = function (block, cb) {
 
 //
 Blocks.prototype.simpleDeleteAfterBlock = function (blockId, cb) {
+	console.log('---------------------------- simpleDeleteAfterBlock');
 	library.db.query(sql.simpleDeleteAfterBlock, {id: blockId}).then(function (res) {
 		return cb(null, res);
 	}).catch(function (err) {
@@ -1421,6 +1442,7 @@ Blocks.prototype.simpleDeleteAfterBlock = function (blockId, cb) {
 
 //
 Blocks.prototype.loadBlocksFromPeer = function (peer, cb) {
+	console.log('---------------------------- loadBlocksFromPeer');
 	var lastValidBlock = modules.blockchain.getLastBlock();
 
 	library.logger.info('Loading blocks from: ' + peer);
@@ -1457,6 +1479,7 @@ Blocks.prototype.loadBlocksFromPeer = function (peer, cb) {
 
 //
 Blocks.prototype.deleteBlocksBefore = function (block, cb) {
+	console.log('---------------------------- deleteBlocksBefore');
 	var blocks = [];
 
 
@@ -1488,6 +1511,7 @@ Blocks.prototype.deleteBlocksBefore = function (block, cb) {
 
 //
 Blocks.prototype.generateBlock = function (keypair, timestamp, cb) {
+	console.log('---------------------------- generateBlock');
 	var transactions = modules.transactionPool.getUnconfirmedTransactionList(false, constants.maxTxsPerBlock);
 	var ready = [];
 
@@ -1555,9 +1579,9 @@ Blocks.prototype.generateBlock = function (keypair, timestamp, cb) {
 
 //
 Blocks.prototype.onProcessBlock = function (block, cb) {
+	console.log('---------------------------- onProcessBlock');
 	library.blockSequence.add(function(sequenceCb){
 		if(block.numberOfTransactions == 0){
-
 			return self.processEmptyBlock(block, sequenceCb);
 		}
 		else{
@@ -1572,6 +1596,7 @@ Blocks.prototype.onProcessBlock = function (block, cb) {
 
 //
 Blocks.prototype.onBind = function (scope) {
+	console.log('---------------------------- onBind');
 	modules = scope;
 };
 
@@ -1581,6 +1606,7 @@ Blocks.prototype.onBind = function (scope) {
 
 //
 Blocks.prototype.onAttachPublicApi = function () {
+	console.log('---------------------------- onAttachPublicApi');
  	__private.attachApi();
 };
 
@@ -1590,6 +1616,7 @@ Blocks.prototype.onAttachPublicApi = function () {
 
 //
 Blocks.prototype.cleanup = function (cb) {
+	console.log('---------------------------- cleanup');
 	__private.cleanup = true;
 
 	var count = 0;

@@ -16,11 +16,11 @@ __private.validateCauses = function (causes) {
 	var msg = null;
 	causes.forEach(function(cause) {
 		switch(cause.id) {
-		case 1: if(cause.confirmations === undefined || cause.confirmations !== 0) {
+		case 1: if(cause.confirmation === undefined || cause.confirmation !== 0) {
 			msg = 'Invalid confirmations for Cause 1 Type - '+contractTypes.causes[cause.id].type;
 		}
 			break;
-		case 2: if(cause.confirmations === undefined || cause.confirmations <= 0) {
+		case 2: if(cause.confirmation === undefined || cause.confirmation <= 0) {
 			msg = 'Invalid confirmations for Cause 2 Type - '+contractTypes.causes[cause.id].type;
 		}
 			break;
@@ -36,11 +36,6 @@ __private.validateCauses = function (causes) {
 			msg = 'Invalid amount for Cause 5 Type - '+contractTypes.causes[cause.id].type;
 		}
 			break;
-			//this will be a effect not cause
-		// case 10: if(!cause.sidechainId) {
-		// 	msg = 'Invalid sidechain id for Cause 10 Type - '+contractTypes.causes[cause.id].type;
-		// }
-		// 	break;
 		}
 	});
 	return msg;
@@ -100,13 +95,29 @@ Contract.prototype.verify = function (trs, sender, cb) {
 		return cb('Invalid effects asset.');
 	}
 	var msg = __private.validateCauses(trs.asset.contract.definition.causes);
-	if(msg) {
+	if (msg) {
 		return cb(msg);
 	}
 	if (trs.asset.contract.prevTransactionId === undefined) {
 		return cb('Invalid prevTransactionId asset.');
 	}
-	return cb(null, trs);
+	if (trs.asset.contract.prevTransactionId) {
+		modules.transactions.countByIdAndType({id: trs.asset.contract.prevTransactionId, type: 6}, function (err, count) {
+			if (err) {
+				return cb(err);
+			}
+			else if (!count) {
+				return cb('Invalid previous transaction id.');
+			}
+			else {
+				return cb(null, trs);
+			}
+		});
+	}
+	else {
+		return cb(null, trs);
+	}
+
 	// async.parallel([
 	// 	function(callback) {
 	// 		if (trs.asset.contract.prevTransactionId) {
