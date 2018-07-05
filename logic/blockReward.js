@@ -175,7 +175,7 @@ BlockReward.prototype.getProportionalReward = function (dependentId, height, cb)
 				}
 			}
 			else {
-				library.logger.info('Couldn\'t find any voters for delegate: ',dependentId);
+				library.logger.info('Couldn\'t find any voters for delegate',dependentId);
 				return cb(null, zeroReward);
 			}
 	}).catch(function (err) {

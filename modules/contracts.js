@@ -8,7 +8,6 @@ var transactionTypes = require('../helpers/transactionTypes.js');
 var schema = require('../schema/contracts.js');
 var sql = require('../sql/contracts.js');
 var tsql = require('../sql/transactions.js');
-var contractTypes = require('../helpers/contractTypes.js');
 
 // Private fields
 var modules, library, self, __private = {}, shared = {};
@@ -36,7 +35,9 @@ __private.attachApi = function () {
 	router.map(shared, {
 		'get /': 'getContracts',
 		'get /get': 'getContract',
-		'get /history': 'getHistory'
+		'get /history': 'getHistory',
+		'get /causes': 'getCauses',
+		'get /triggeringTx': 'deleteTriggeringTx'
 	});
 
 	router.use(function (req, res, next) {
@@ -51,6 +52,14 @@ __private.attachApi = function () {
 	});
 };
 
+__private.getConfirmedTriggeringTxs = function (height, cb) {
+	library.db.query(sql.getConfirmedTriggeringTxs, {triggerAddress: transaction.recipientId}).then(function (rows) {
+		cb(null, rows);
+	}).catch(function (err) {
+		library.logger.error('stack', err);
+		cb(err);
+	});
+};
 
 __private.getHistory = function (transactionId, limit, history, cb) {
 	if(history.length < limit) {
@@ -77,7 +86,7 @@ __private.getHistory = function (transactionId, limit, history, cb) {
 			}
 		}).catch(function (err) {
 			library.logger.error('stack', err);
-			return cb('Contracts#get error');
+			return cb('Contracts#getHistory error');
 		});
 	}
 	else {
@@ -85,14 +94,34 @@ __private.getHistory = function (transactionId, limit, history, cb) {
 	}
 };
 
+__private.getContracts = function (query, params, cb) {
+	library.db.query(query, params).then(function (rows) {
+		if (!rows.length) {
+			return cb('Contracts not found: '+params[Object.keys(params)[0]]);
+		}
+
+		var contracts = [];
+		rows.forEach(function (row) {
+			var result = JSON.parse(row.rawasset).contract;
+			result.isActive = row.isActive;
+			delete result.prevTransactionId;
+			contracts.push(result);
+		});
+
+		return cb(null, contracts);
+	}).catch(function (err) {
+		library.logger.error('stack', err);
+		return cb('Contracts#getContracts error');
+	});
+};
 // ************************** check where this function should be written
 // ************** check if triggering tx already exists in table
-__private.saveTriggeringTx = function(triggeringTxId, address, height, confirmation) {
-	console.log('>>>>>>>>>>>>>>> saveTriggeringTx',triggeringTxId, address, height, confirmation);
+__private.saveTriggeringTx = function (triggeringTxId, recipientId, height, confirmation) {
+	console.log('>>>>>>>>>>>>>>> saveTriggeringTx',triggeringTxId, recipientId, height, confirmation);
 	library.db.query(sql.insertTriggeringTx, {
 		// transactionId: contractTxId,
 		transactionId: triggeringTxId,
-		address: address,
+		recipientId: recipientId,
 		confirmationHeight: (height + confirmation)
 	}).then(function (rows) {
 
@@ -101,13 +130,13 @@ __private.saveTriggeringTx = function(triggeringTxId, address, height, confirmat
 	});
 };
 
-__private.getTriggeringTxs = function(height, cb) {
+__private.getTriggeringTxs = function (height, cb) {
 	console.log('>>>>>>>>>>>>>>>>>> getTriggeringTxs height: ', height);
 	library.db.query(sql.getTriggeringTxs, {
 		height: height
 	}).then(function (rows) {
-			console.log('>>>>>>>>>>>>>>>>>> getTriggeringTxs found: ', rows);
-			cb(null, rows);
+		console.log('>>>>>>>>>>>>>>>>>> getTriggeringTxs found: ', rows);
+		cb(null, rows);
 	}).catch(function (err) {
 		library.logger.error('stack', err);
 	});
@@ -115,74 +144,56 @@ __private.getTriggeringTxs = function(height, cb) {
 
 __private.validateCauses = function(triggeringTx, causes, height) {
 	var isValid = true;
+	var savedTx = false;
+
 	for(var i = 0; i < causes.length; i++) {
 	//causes.forEach(function (cause) {
 		switch(causes[i].id) {
+		//Zero confirmation
 		case 1: if(triggeringTx.confirmation !== 0) {
 			isValid = false;
 		}
 			console.log('case 1 ',isValid);
 			break;
-		case 2: if(triggeringTx.confirmation !== causes[i].confirmation)
-			__private.saveTriggeringTx(triggeringTx.id, triggeringTx.recipientId, height, causes[i].confirmation);
-			isValid = false;
+		//Confirmation
+		case 2: if(triggeringTx.confirmation !== causes[i].confirmation) {
+			__private.saveTriggeringTx(triggeringTx.id, triggeringTx.recipientId, height, 3);
 			console.log('case 2 ',isValid);
+			savedTx = true;
+		}
 			break;
+		//Balance breach
 		case 3: if (triggeringTx.balance > causes[i].balanceLimit) {
 			isValid = false;
 		}
 			console.log('case 3 ',isValid, triggeringTx.balance, causes[i].balanceLimit);
 			break;
+		//Specific source
 		case 4: if (triggeringTx.senderId !== causes[i].senderId) {
 			isValid = false;
 		}
 			console.log('case 4 ',isValid);
 			break;
+		//Specific amount
 		case 5: if (triggeringTx.amount !== causes[i].amount) {
 			isValid = false;
 		}
 			console.log('case 5', isValid, triggeringTx.amount, causes[i].amount);
 			break;
+		//Reference
+		case 6: if (triggeringTx.reference !== causes[i].reference) {
+			isValid = false;
 		}
+			console.log('case 6',isValid);
+			break;
+		}
+
 		if(!isValid) {
 			break;
 		}
 	}
-	return isValid;
-	//changeto forecah **************
-	// async.eachSeries(causes, function(cause, cb) {
-	// 	console.log('>>>>>>>>>>>>>> ',cause);
-	// 	switch(cause.id) {
-	// 	case 1: if (cause.confirmation !== 0) {
-	// 	cb('CAUSE_1 failed');
-	// }
-	// 		break;
-	// 	case 2: __private.savePendingContract(id, contract, triggeringTx);
-	// 		cb('CAUSE_2');
-	// 		break;
-	// 	case 3: if(cause.balanceLimit && tx.balance > cause.balanceLimit) { //if(tx.balance > cause.balanceLimit)
-	// 		cb('CAUSE_3');
-	// 	}
-	// 		break;
-	// 	case 4: if(cause.senderId && tx.senderId !== cause.senderId) {
-	// 		cb('CAUSE_4');
-	// 	}
-	// 		break;
-	// 	case 5: if(cause.amount && tx.amount !== cause.amount) {
-	// 		cb('CAUSE_5');
-	// 	}
-	// 		break;
-	// 	}
-	// },
-	// function(err) {
-	// 	if(err) {
-	// 		console.log('?>>>>>>>>>>>>>>>>>>>>> Contract cuases notmatch');
-	//
-	// 	}
-	// 	else {
-	// 		console.log('Send JSON to webhook');
-	// 	}
-	// });
+
+	return (isValid && !savedTx);
 };
 // Public methods
 
@@ -295,24 +306,24 @@ Contracts.prototype.checkContractsToExecute = function (height, transactions) {
 				console.log('>>>>>>>>>>>>>>>>>> ',transaction.label, transaction.id, transaction.recipientId);
 				if(transaction.type === 0) {
 					//get contracts for specific address
-					library.db.query(sql.getByTriggerAddress, {triggerAddress: transaction.recipientId}).then(function (contracts) {
-						console.log('>>>>>>>>>>>>>>>>>> contracts '+contracts.length+ ' found for '+transaction.id+ ' '+ transaction.recipientId);
+					__private.getContracts(sql.getActive, {triggerAddress: transaction.recipientId, id: transaction.id}, function (err, contracts) {
+					//library.db.query(sql.getByTriggerAddress, {triggerAddress: transaction.recipientId}).then(function (contracts) {
+						if(err) {
+							cb(err);
+						}
+						console.log('>>>>>>>>>>>>>>>>>> contracts found tx, recp, contracts '+transaction.id, transaction.recipientId,contracts.length);
 						//contracts.forEach(function(data) {
-							for(var i = 0; i < contracts.length; i++) {
-							var rawasset = JSON.parse(contracts[i].rawasset);
-							console.log('>>>>>>>>>>>>>>>>>> contracts asset ',JSON.stringify(rawasset.contract.definition.causes));
-							var result = __private.validateCauses(transaction, rawasset.contract.definition.causes, height);
-							console.log('>>>>>>>>>>>>>>>>>> contracts validation result',result);
-							if(result) {
-								verifiedTriggeringTxs.push({transactionId: transaction.id, address: transaction.recipientId});
-								break;
-							}
-						};
+						for(var i = 0; i < contracts.length; i++) {
+							console.log('>>>>>>>>>>>>>>>>>>>>>>>>>> contracts [i]', JSON.stringify(contracts[i]));
+							// if(contracts[i].isActive) {
+								var result = __private.validateCauses(transaction, contracts[i].definition.causes, height);
+								if(result) {
+									verifiedTriggeringTxs.push({transactionId: transaction.id, address: transaction.recipientId});
+									break;
+								}
+							// }
+						}
 						cb();
-					}).catch(function (err) {
-						//need to handle if error occurs then the trigerring transacvtion should not be lost
-						library.logger.error('stack', err);
-						cb(err);
 					});
 				}
 				else {
@@ -390,14 +401,6 @@ Contracts.prototype.checkContractsToExecute = function (height, transactions) {
 // });
 };
 
-__private.getConfirmedTriggeringTxs = function (height, cb) {
-	library.db.query(sql.getConfirmedTriggeringTxs, {triggerAddress: transaction.recipientId}).then(function (rows) {
-		cb(null, rows);
-	}).catch(function (err) {
-		library.logger.error('stack', err);
-		cb(err);
-	});
-};
 // Events
 //
 //__EVENT__ `onBind`
@@ -424,37 +427,24 @@ shared.getContracts = function (req, cb) {
 			return cb(err[0].message);
 		}
 
-		var query = '', params = {}, errMsg = '';
+		var query = '', params = {};
 		if(req.body.publicKey) {
 			query = sql.getByPublicKey;
 			params = {publicKey: req.body.publicKey};
-			errMsg = 'Contracts not found: ' +req.body.publicKey;
 		}
 		else if(req.body.address) {
 			query = sql.getByTriggerAddress;
 			params = {triggerAddress: req.body.address};
-			errMsg = 'Contracts not found: ' +req.body.address;
 		}
 		else {
 			return cb(null, {success: false, error: 'Missing required property: address or publicKey'});
 		}
 
-		library.db.query(query, params).then(function (rows) {
-			if (!rows.length) {
-				return cb(errMsg);
+		__private.getContracts(query, params, function (err, res) {
+			if(err) {
+				return cb(err);
 			}
-
-			var contracts = [];
-			rows.forEach(function (row) {
-				var contract = JSON.parse(row.rawasset).contract;
-				delete contract.prevTransactionId;
-				contracts.push(contract);
-			});
-
-			return cb(null,  {'contracts': contracts});
-		}).catch(function (err) {
-			library.logger.error('stack', err);
-			return cb('Contracts#getByPublicKey error');
+			return cb(null, {contracts: res})
 		});
 	});
 };
@@ -476,7 +466,7 @@ shared.getContract = function (req, cb) {
 			return cb(null, rawasset);
 		}).catch(function (err) {
 			library.logger.error('stack', err);
-			return cb('Contracts#get error');
+			return cb('Contracts#getContract error');
 		});
 	});
 };
@@ -496,6 +486,40 @@ shared.getHistory = function(req, cb) {
 		}
 		__private.getHistory(req.body.id, limit, history, cb);
 	});
+};
+
+
+shared.getCauses = function (req, cb) {
+	library.db.query(sql.getCauses).then(function (rows) {
+		if (!rows.length) {
+			return cb('Causes not found.');
+		}
+
+		return cb(null, {causes: rows});
+	}).catch(function (err) {
+		library.logger.error('stack', err);
+		return cb('Contracts#getCauses error');
+	});
+};
+
+
+shared.deleteTriggeringTx = function (req, cb) {
+	library.schema.validate(req.body, schema.deleteTriggeringTx, function (err) {
+		if (err) {
+			return cb(err[0].message);
+		}
+
+		library.db.query(sql.deleteTriggeringTx, {transactionId: req.body.transactionId}).then(function (rows) {
+			return cb();
+		}).catch(function (err) {
+			library.logger.error("stack", err.stack);
+			return cb('Contracts#deleteTriggeringTx error');
+		});
+	});
+};
+
+__private.sendTriggeringTxs = function (payload) {
+
 };
 
 // Export

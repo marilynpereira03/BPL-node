@@ -96,6 +96,25 @@ CREATE TABLE IF NOT EXISTS "peers"(
   "clock" BIGINT
 );
 
+CREATE TABLE IF NOT EXISTS "sidechains"(
+  "ticker" VARCHAR(6) PRIMARY KEY,
+  "publicKey" bytea NOT NULL,
+  "transactionId" VARCHAR(64) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS "contracts"(
+  "triggerAddress" VARCHAR(36) NOT NULL,
+  "publicKey" bytea NOT NULL,
+  "transactionId" VARCHAR(64) NOT NULL,
+  "isActive" BOOLEAN NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS "triggering_transactions"(
+  "transactionId" VARCHAR(64) NOT NULL,
+  "recipientId" VARCHAR(36) NOT NULL,
+  "confirmationHeight" INT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS "causes"(
   "id" SERIAL NOT NULL PRIMARY KEY,
   "type" VARCHAR(50)
@@ -105,6 +124,13 @@ CREATE TABLE IF NOT EXISTS "effects"(
   "id" SERIAL NOT NULL PRIMARY KEY,
   "type" VARCHAR(50)
 );
+
+INSERT INTO causes("id", "type") VALUES ('1', 'Zero confirmation');
+INSERT INTO causes("id", "type") VALUES ('2', 'Confirmation');
+INSERT INTO causes("id", "type") VALUES ('3', 'Balance breach');
+INSERT INTO causes("id", "type") VALUES ('4', 'Specific source');
+INSERT INTO causes("id", "type") VALUES ('5', 'Specific amount');
+INSERT INTO causes("id", "type") VALUES ('6', 'Specific reference');
 
 
 /* Unique Indexes */

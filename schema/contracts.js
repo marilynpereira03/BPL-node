@@ -10,7 +10,7 @@ module.exports = {
 				minLength: 1
 			}
 		},
-    required: ['id']
+		required: ['id']
 	},
 	getContracts: {
 		id: 'contracts.getContracts',
@@ -40,6 +40,17 @@ module.exports = {
 				minimum: 1,
 				maximum: 50
 			},
+		},
+		required: ['id']
+	},
+	deleteTriggeringTx: {
+		id: 'contracts.deleteTriggeringTx',
+		type: 'object',
+		properties: {
+			id: {
+				type: 'string',
+				minLength: 1
+			}
 		},
 		required: ['id']
 	}

@@ -2,7 +2,6 @@
 
 var async = require('async');
 var constants = require('../constants.json');
-var contractTypes = require('../helpers/contractTypes.js');
 var sql = require('../sql/contracts.js');
 
 // Private fields
@@ -16,26 +15,37 @@ __private.validateCauses = function (causes) {
 	var msg = null;
 	causes.forEach(function(cause) {
 		switch(cause.id) {
+		//Zero confirmation
 		case 1: if(cause.confirmation === undefined || cause.confirmation !== 0) {
-			msg = 'Invalid confirmations for Cause 1 Type - '+contractTypes.causes[cause.id].type;
+			msg = 'Invalid confirmations for Cause - Zero confirmation.';
 		}
 			break;
+		//Confirmation
 		case 2: if(cause.confirmation === undefined || cause.confirmation <= 0) {
-			msg = 'Invalid confirmations for Cause 2 Type - '+contractTypes.causes[cause.id].type;
+			msg = 'Invalid confirmations for Cause - Confirmation.';
 		}
 			break;
-		case 3: if(cause.balanceLimit === undefined) {
-			msg = 'Invalid balance limit for Cause 3 Type - '+contractTypes.causes[cause.id].type;
+		//Balance breach
+		case 3: if(!cause.balanceLimit) {
+			msg = 'Missing balance limit for Cause - Balance breach.';
 		}
 			break;
+		//Specific source
 		case 4: if(!cause.senderId) {
-			msg = 'Invalid sender id for Cause 4 Type - '+contractTypes.causes[cause.id].type;
+			msg = 'Missing sender id for Cause - Specific source.';
 		}
 			break;
-		case 5: if(cause.amount === undefined) {
-			msg = 'Invalid amount for Cause 5 Type - '+contractTypes.causes[cause.id].type;
+		//Specific amount
+		case 5: if(!cause.amount) {
+			msg = 'Missing amount for Cause - Specific amount.';
 		}
 			break;
+		case 6: if(!cause.reference) {
+			msg = 'Missing amount for Cause - Reference.';
+		}
+			break;
+		default:
+		 	msg = 'Invalid cause id.';
 		}
 	});
 	return msg;
