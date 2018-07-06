@@ -1,6 +1,4 @@
 'use strict';
-
-var async = require('async');
 var constants = require('../constants.json');
 var sql = require('../sql/contracts.js');
 
@@ -10,7 +8,9 @@ var modules, __private = {}, library;
 // Constructor
 function Contract () {}
 
-// Private menthods
+// Private methods
+
+// validate cause properties
 __private.validateCauses = function (causes) {
 	var msg = null;
 	causes.forEach(function(cause) {
@@ -44,8 +44,7 @@ __private.validateCauses = function (causes) {
 			msg = 'Missing amount for Cause - Reference.';
 		}
 			break;
-		default:
-		 	msg = 'Invalid cause id.';
+		default: msg = 'Invalid cause id.';
 		}
 	});
 	return msg;
@@ -88,10 +87,6 @@ Contract.prototype.verify = function (trs, sender, cb) {
 	if (!trs.asset || !trs.asset.contract) {
 		return cb('Invalid transaction asset.');
 	}
-	// ************************** Remove if not needed
-	// if (!trs.asset.contract.type) {
-	// 	return cb('Invalid type asset.');
-	// }
 	if (!trs.asset.contract.trigger && trs.asset.contract.trigger.length) {
 		return cb('Invalid trigger asset.');
 	}
@@ -127,63 +122,6 @@ Contract.prototype.verify = function (trs, sender, cb) {
 	else {
 		return cb(null, trs);
 	}
-
-	// async.parallel([
-	// 	function(callback) {
-	// 		if (trs.asset.contract.prevTransactionId) {
-	// 			modules.transactions.countByIdAndType({id: trs.asset.contract.prevTransactionId, type: 6}, function (err, count) {
-	// 				if (err) {
-	// 					callback(err);
-	// 				}
-	// 				else if (!count) {
-	// 					callback('Invalid previous transaction id.');
-	// 				}
-	// 				else {
-	// 					callback(null);
-	// 				}
-	// 			});
-	// 		}
-	// 		else {
-	// 			callback(null);
-	// 		}
-	// 	},
-	// 	function(callback) {
-	// 		//Sidechain Payment Smart Contract Type === 1
-	// 		if(trs.asset.contract.type === 1 && trs.asset.contract.effect.transactionId) {
-	// 			modules.transactions.countByIdAndType({id: trs.asset.contract.effect.transactionId, type: 7}, function (err, count) {
-	// 				if (err) {
-	// 					callback(err);
-	// 				}
-	// 				else if (!count) {
-	// 					callback('Invalid sidechain transaction id.');
-	// 				}
-	// 				else {
-	// 					modules.transactions.countConfirmations({id: trs.asset.contract.effect.transactionId, type: 7}, function (err, confirmations) {
-	// 						if (err) {
-	// 							callback(err);
-	// 						}
-	// 						else if (confirmations < 2) {
-	// 							callback('Minimum 60 confirmations needed. Sidechain has '+confirmations+' confirmations.');
-	// 						}
-	// 						else {
-	// 							callback(null);
-	// 						}
-	// 					});
-	// 				}
-	// 			});
-	// 		}
-	// 		else {
-	// 			callback(null);
-	// 		}
-	// 	}
-	// ], function(err) {
-	// 	if(err) {
-	// 		return cb(err);
-	// 	}
-	// 	else {
-	// 		return cb(null, trs);
-	// 	}
-	// });
 };
 
 //
@@ -197,7 +135,7 @@ Contract.prototype.process = function (trs, sender, cb) {
 //
 //__API__ `getBytes`
 
-//ToDo
+//
 Contract.prototype.getBytes = function (trs) {
 	// var buf;
 	// if(trs.asset.contract.type)

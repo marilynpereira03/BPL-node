@@ -8,6 +8,7 @@ var transactionTypes = require('../helpers/transactionTypes.js');
 var schema = require('../schema/contracts.js');
 var sql = require('../sql/contracts.js');
 var tsql = require('../sql/transactions.js');
+var request = require('request');
 
 // Private fields
 var modules, library, self, __private = {}, shared = {};
@@ -52,15 +53,6 @@ __private.attachApi = function () {
 	});
 };
 
-__private.getConfirmedTriggeringTxs = function (height, cb) {
-	library.db.query(sql.getConfirmedTriggeringTxs, {triggerAddress: transaction.recipientId}).then(function (rows) {
-		cb(null, rows);
-	}).catch(function (err) {
-		library.logger.error('stack', err);
-		cb(err);
-	});
-};
-
 __private.getHistory = function (transactionId, limit, history, cb) {
 	if(history.length < limit) {
 		library.db.query(tsql.getRawAssetById, {id: transactionId}).then(function (rows) {
@@ -70,12 +62,10 @@ __private.getHistory = function (transactionId, limit, history, cb) {
 
 			var rawasset = JSON.parse(rows[0].rawasset);
 			var contract = {
-				// ************************** Remove if not needed
-				// type: rawasset.contract.type,
-				// label: rawasset.contract.label,
 				trigger: rawasset.contract.trigger,
 				definition: rawasset.contract.definition,
 			};
+
 			history.push(contract);
 
 			if(rawasset.contract.prevTransactionId) {
@@ -114,12 +104,10 @@ __private.getContracts = function (query, params, cb) {
 		return cb('Contracts#getContracts error');
 	});
 };
-// ************************** check where this function should be written
-// ************** check if triggering tx already exists in table
+
 __private.saveTriggeringTx = function (triggeringTxId, recipientId, height, confirmation) {
 	console.log('>>>>>>>>>>>>>>> saveTriggeringTx',triggeringTxId, recipientId, height, confirmation);
 	library.db.query(sql.insertTriggeringTx, {
-		// transactionId: contractTxId,
 		transactionId: triggeringTxId,
 		recipientId: recipientId,
 		confirmationHeight: (height + confirmation)
@@ -135,19 +123,35 @@ __private.getTriggeringTxs = function (height, cb) {
 	library.db.query(sql.getTriggeringTxs, {
 		height: height
 	}).then(function (rows) {
-		console.log('>>>>>>>>>>>>>>>>>> getTriggeringTxs found: ', rows);
 		cb(null, rows);
 	}).catch(function (err) {
 		library.logger.error('stack', err);
 	});
 };
 
+//TODO
+__private.sendTriggeringTxsToBit = function (triggeringTxs) {
+	console.log('>>>>>> In sendTriggeringTxsToBit',triggeringTxs);
+	var options = {
+		method: 'POST',
+		url: 'http://10.0.0.220:3000/bit/triggeringTxs',
+		body: {
+			payload: triggeringTxs
+		},
+		json: true
+	};
+
+	request(options, function (err, res) {
+		console.log('RESPONSE FROM BiT >>', res.body);
+	});
+};
+
+
 __private.validateCauses = function(triggeringTx, causes, height) {
 	var isValid = true;
 	var savedTx = false;
 
 	for(var i = 0; i < causes.length; i++) {
-	//causes.forEach(function (cause) {
 		switch(causes[i].id) {
 		//Zero confirmation
 		case 1: if(triggeringTx.confirmation !== 0) {
@@ -195,6 +199,8 @@ __private.validateCauses = function(triggeringTx, causes, height) {
 
 	return (isValid && !savedTx);
 };
+
+
 // Public methods
 
 //
@@ -316,11 +322,11 @@ Contracts.prototype.checkContractsToExecute = function (height, transactions) {
 						for(var i = 0; i < contracts.length; i++) {
 							console.log('>>>>>>>>>>>>>>>>>>>>>>>>>> contracts [i]', JSON.stringify(contracts[i]));
 							// if(contracts[i].isActive) {
-								var result = __private.validateCauses(transaction, contracts[i].definition.causes, height);
-								if(result) {
-									verifiedTriggeringTxs.push({transactionId: transaction.id, address: transaction.recipientId});
-									break;
-								}
+							var result = __private.validateCauses(transaction, contracts[i].definition.causes, height);
+							if(result) {
+								verifiedTriggeringTxs.push({transactionId: transaction.id, address: transaction.recipientId});
+								break;
+							}
 							// }
 						}
 						cb();
@@ -356,49 +362,10 @@ Contracts.prototype.checkContractsToExecute = function (height, transactions) {
 	], function(err, res) {
 		console.log('FINAL: ', err,res);
 		if(!err) {
-			// console.log('>>>>>>>>>>>> Webhook',res);
+			var triggeringTxs = res[0].merge(res[1]);
+			__private.sendTriggeringTxsToBit(triggeringTxs);
 		}
 	});
-// async.each(transactions, function(transaction, cb) {
-// 	console.log('>>>>>>>>>>>>>>>>>> ',transaction.label);
-// 	if(transaction.type === 0) {
-// 		//get contracts for specific address
-// 		library.db.query(sql.getByTriggerAddress, {triggerAddress: transaction.recipientId}).then(function (contracts) {
-// 			console.log('>>>>>>>>>>>>>>>>>> contracts found ',contracts.length);
-// 			contracts.forEach(function(data) {
-// 				var rawasset = JSON.parse(data.rawasset);
-// 				console.log('>>>>>>>>>>>>>>>>>> contracts asset ',JSON.stringify(rawasset.contract.definition.causes, null, 2));
-// 				var result = __private.validateCauses(transaction, rawasset.contract.definition.causes, height);
-// 				console.log('>>>>>>>>>>>>>>>>>> validateCauses result',result, typeof(result));
-// 				if(result) {
-// 					fulfilledContracts.push({id: transaction.id, triggerAddress: transaction.recipientId});
-// 				}
-// 			});
-// 			cb();
-// 		}).catch(function (err) {
-// 			//need to handle if error occurs then the trigerring transacvtion should not be lost
-// 			library.logger.error('stack', err);
-// 			cb(err);
-// 		});
-// 	}
-// 	else {
-// 		cb();
-// 	}
-// },
-// function(err) {
-// 	if(!err) {
-// 		if(fulfilledContracts.length) {
-// 		console.log('>>>>>>>>>>>>>>>> Suuccess send to webhook', fulfilledContracts);
-// 		fulfilledContracts = [];
-// 		}
-//
-// 		// getConfirmedTriggeringTxs(height, function(err, res) {
-// 		// 	if(!err) {
-// 		// 		//merge arr1 & arr2 and send to webhook
-// 		// 	}
-// 		// });
-// 	}
-// });
 };
 
 // Events
@@ -414,8 +381,11 @@ Contracts.prototype.onBind = function (scope) {
 };
 
 
+// Events
+//
 //__EVENT__ `onAttachPublicApi`
 
+//
 Contracts.prototype.onAttachPublicApi = function () {
 	__private.attachApi();
 };
@@ -444,7 +414,7 @@ shared.getContracts = function (req, cb) {
 			if(err) {
 				return cb(err);
 			}
-			return cb(null, {contracts: res})
+			return cb(null, {contracts: res});
 		});
 	});
 };
@@ -509,17 +479,14 @@ shared.deleteTriggeringTx = function (req, cb) {
 			return cb(err[0].message);
 		}
 
+		//TODO
 		library.db.query(sql.deleteTriggeringTx, {transactionId: req.body.transactionId}).then(function (rows) {
-			return cb();
+			return cb({message: 'Success'});
 		}).catch(function (err) {
-			library.logger.error("stack", err.stack);
+			library.logger.error('stack', err.stack);
 			return cb('Contracts#deleteTriggeringTx error');
 		});
 	});
-};
-
-__private.sendTriggeringTxs = function (payload) {
-
 };
 
 // Export
