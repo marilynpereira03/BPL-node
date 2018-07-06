@@ -3,8 +3,8 @@
 module.exports = {
 	transactions: {
 		id: 'nodeManager.transactions',
-    type: 'array',
-    uniqueItems: true,
+		type: 'array',
+		uniqueItems: true,
 		required: ['transactions']
 	}
 };
