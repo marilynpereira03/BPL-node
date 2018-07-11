@@ -58,7 +58,8 @@ Transaction.prototype.create = function (data) {
 		requesterPublicKey: data.requester ? data.requester.publicKey.toString('hex') : null,
 		timestamp: slots.getTime(),
 		vendorField: data.vendorField,
-		asset: {}
+		asset: {},
+		payload: data.payload || null
 	};
 
 	trs = __private.types[trs.type].create.call(this, data, trs);
@@ -164,11 +165,20 @@ Transaction.prototype.getBytes = function (trs, skipSignature, skipSecondSignatu
 	if (!__private.types[trs.type]) {
 		throw 'Unknown transaction type ' + trs.type;
 	}
-
+	//Changed
+	let payloadSize = 0,
+		payloadBytes = null;
 	var bb;
 
 	try {
 		var assetBytes = __private.types[trs.type].getBytes.call(this, trs, skipSignature, skipSecondSignature);
+		//Changed
+		if (trs.payload) {
+			payloadBytes = new Buffer(trs.payload, 'utf8');
+			payloadSize = payloadBytes.length;
+		}
+		//END
+
 		var assetSize = assetBytes ? assetBytes.length : 0;
 		var i;
 
@@ -224,6 +234,13 @@ Transaction.prototype.getBytes = function (trs, skipSignature, skipSecondSignatu
 			}
 		}
 
+		//Changed
+		if (payloadSize > 0) {
+			for (let i = 0; i < payloadSize; i++) {
+				bb.writeByte(payloadBytes[i]);
+			}
+		}
+		//END
 		if (!skipSignature && trs.signature) {
 			var signatureBuffer = new Buffer(trs.signature, 'hex');
 			for (i = 0; i < signatureBuffer.length; i++) {
@@ -838,7 +855,8 @@ Transaction.prototype.dbFields = [
 	'signature',
 	'signSignature',
 	'signatures',
-	'rawasset'
+	'rawasset',
+	'payload'
 ];
 
 //
@@ -881,7 +899,8 @@ Transaction.prototype.dbSave = function (trs) {
 				signature: signature,
 				signSignature: signSignature,
 				signatures: trs.signatures ? JSON.stringify(trs.signatures) : null,
-				rawasset: JSON.stringify(trs.asset)
+				rawasset: JSON.stringify(trs.asset),
+				payload: trs.payload || null
 			}
 		}
 	];
@@ -970,6 +989,9 @@ Transaction.prototype.schema = {
 		},
 		asset: {
 			type: 'object'
+		},
+		payload: {
+			type: 'string'
 		}
 	},
 	required: ['type', 'timestamp', 'senderPublicKey', 'signature']
@@ -1015,7 +1037,6 @@ Transaction.prototype.objectNormalize = function (trs) {
 //
 Transaction.prototype.dbRead = function (raw) {
 	var tx = raw;
-
 	tx.amount=parseInt(raw.amount);
 	tx.fee=parseInt(raw.fee);
 

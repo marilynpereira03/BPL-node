@@ -96,6 +96,8 @@ CREATE TABLE IF NOT EXISTS "peers"(
   "clock" BIGINT
 );
 
+ALTER TABLE transactions ADD COLUMN payload VARCHAR(50) default NULL;
+
 /* Unique Indexes */
 CREATE UNIQUE INDEX IF NOT EXISTS "blocks_height" ON "blocks"("height");
 CREATE UNIQUE INDEX IF NOT EXISTS "blocks_previousBlock" ON "blocks"("previousBlock");
