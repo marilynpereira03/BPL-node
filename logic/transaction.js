@@ -457,8 +457,8 @@ Transaction.prototype.verify = function (trs, sender, requester, cb) {
 	if (trs.requesterPublicKey && !requester.secondSignature && (trs.signSignature && trs.signSignature.length > 0)) {
 		return cb('Requester does not have a second signature');
 	}
-
-	if (trs.hasOwnProperty('paylaod')) {
+	
+	if (trs.payload === undefined) {
 		return cb('Transaction must have payload field');
 	}
 	// Check sender public key
