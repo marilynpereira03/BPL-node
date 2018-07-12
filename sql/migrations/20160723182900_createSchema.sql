@@ -96,6 +96,7 @@ CREATE TABLE IF NOT EXISTS "peers"(
   "clock" BIGINT
 );
 
+/* Alter tables */
 ALTER TABLE transactions ADD COLUMN IF NOT EXISTS payload VARCHAR(50) default NULL;
 
 /* Unique Indexes */
