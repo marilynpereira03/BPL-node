@@ -39,7 +39,7 @@ var TransactionsSql = {
   },
 
   getById: 'SELECT t.id, b.id as blockid, b.height, type, t.timestamp, amount, fee, "vendorField", "senderId", "recipientId", encode("senderPublicKey", \'hex\') as "senderPublicKey", encode("requesterPublicKey", \'hex\') as "requesterPublicKey",  encode("signature", \'hex\') as "signature", encode("signSignature", \'hex\') as "signSignature", signatures::json as signatures, rawasset::json as asset, (SELECT MAX(height) + 1 FROM blocks) - b.height AS confirmations FROM transactions t, blocks b WHERE b.id = t."blockId" AND t.id = ${id}',
-
+  getByPayload : 'SELECT t.id, b.id as blockid, b.height, type, t.timestamp, amount, fee, "vendorField", "senderId", "recipientId", encode("senderPublicKey", \'hex\') as "senderPublicKey", encode("requesterPublicKey", \'hex\') as "requesterPublicKey",  encode("signature", \'hex\') as "signature", encode("signSignature", \'hex\') as "signSignature", signatures::json as signatures, t.payload, rawasset::json as asset, (SELECT MAX(height) + 1 FROM blocks) - b.height AS confirmations FROM transactions t, blocks b WHERE b.id = t."blockId" AND t.payload = ${payload}',
   getVotesById: 'SELECT * FROM votes WHERE "transactionId" = ${id}'
 
 };

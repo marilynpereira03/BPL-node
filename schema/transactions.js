@@ -69,9 +69,13 @@ module.exports = {
 			id: {
 				type: 'string',
 				minLength: 1
+			},
+			payload: {
+				type: 'string',
+				minLength: 1,
+				maxLength: 512
 			}
-		},
-		required: ['id']
+		}
 	},
 	getUnconfirmedTransaction: {
 		id: 'transactions.getUnconfirmedTransaction',
