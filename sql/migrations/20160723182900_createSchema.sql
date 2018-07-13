@@ -48,6 +48,7 @@ CREATE TABLE IF NOT EXISTS "transactions"(
   "vendorField" VARCHAR(64),
   "signatures" TEXT,
   "rawasset" TEXT,
+  "payload" VARCHAR(50) default NULL,
   FOREIGN KEY("blockId") REFERENCES "blocks"("id") ON DELETE CASCADE
 );
 
@@ -95,9 +96,6 @@ CREATE TABLE IF NOT EXISTS "peers"(
   "version" VARCHAR(11),
   "clock" BIGINT
 );
-
-/* Alter tables */
-ALTER TABLE transactions ADD COLUMN IF NOT EXISTS payload VARCHAR(50) default NULL;
 
 /* Unique Indexes */
 CREATE UNIQUE INDEX IF NOT EXISTS "blocks_height" ON "blocks"("height");

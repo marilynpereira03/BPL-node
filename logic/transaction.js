@@ -165,24 +165,22 @@ Transaction.prototype.getBytes = function (trs, skipSignature, skipSecondSignatu
 	if (!__private.types[trs.type]) {
 		throw 'Unknown transaction type ' + trs.type;
 	}
-	//Changed
-	let payloadSize = 0,
-		payloadBytes = null;
+
 	var bb;
 
 	try {
+		let payloadSize = 0,
+			payloadBytes = null;
 		var assetBytes = __private.types[trs.type].getBytes.call(this, trs, skipSignature, skipSecondSignature);
-		//Changed
 		if (trs.payload) {
 			payloadBytes = new Buffer(trs.payload, 'utf8');
 			payloadSize = payloadBytes.length;
 		}
-		//END
 
 		var assetSize = assetBytes ? assetBytes.length : 0;
 		var i;
 
-		bb = new ByteBuffer(1 + 4 + 32 + 8 + 21 + 64 + 64 + 64 + assetSize, true);
+		bb = new ByteBuffer(1 + 4 + 32 + 8 + 21 + 64 + 64 + 64 + assetSize + payloadSize , true);
 		bb.writeByte(trs.type);
 		bb.writeInt(trs.timestamp);
 
@@ -234,13 +232,12 @@ Transaction.prototype.getBytes = function (trs, skipSignature, skipSecondSignatu
 			}
 		}
 
-		//Changed
 		if (payloadSize > 0) {
 			for (let i = 0; i < payloadSize; i++) {
 				bb.writeByte(payloadBytes[i]);
 			}
 		}
-		//END
+
 		if (!skipSignature && trs.signature) {
 			var signatureBuffer = new Buffer(trs.signature, 'hex');
 			for (i = 0; i < signatureBuffer.length; i++) {
@@ -457,9 +454,9 @@ Transaction.prototype.verify = function (trs, sender, requester, cb) {
 	if (trs.requesterPublicKey && !requester.secondSignature && (trs.signSignature && trs.signSignature.length > 0)) {
 		return cb('Requester does not have a second signature');
 	}
-	
+
 	if (trs.payload === undefined) {
-		return cb('Transaction must have payload field');
+		trs.payload = null;
 	}
 	// Check sender public key
 	if (sender.publicKey && sender.publicKey !== trs.senderPublicKey) {
