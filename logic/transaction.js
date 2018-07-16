@@ -1,6 +1,5 @@
 'use strict';
 
-var _ = require('lodash');
 var bignum = require('../helpers/bignum.js');
 var ByteBuffer = require('bytebuffer');
 var constants = require('../constants.json');
@@ -19,10 +18,10 @@ function Transaction (scope, cb) {
 	this.scope = scope;
 	genesisblock = this.scope.genesisblock;
 	bpljs = new bpljs.BplClass({
-		"delegates": constants.activeDelegates,
-		"epochTime": constants.epochTime,
-		"interval": constants.blocktime,
-		"network": scope.config.network
+		'delegates': constants.activeDelegates,
+		'epochTime': constants.epochTime,
+		'interval': constants.blocktime,
+		'network': scope.config.network
 	});
 	self = this;
 	cb && cb(null, this);
@@ -86,7 +85,7 @@ Transaction.prototype.validateAddress = function(address){
 	} catch(e){
 		return false;
 	}
-}
+};
 
 //
 //__API__ `attachAssetType`
@@ -153,7 +152,7 @@ Transaction.prototype.fromBytes = function(buffer){
 	tx.type = buffer.readByte();
 	tx.timestamp = buffer.readInt();
 	return tx;
-}
+};
 
 
 
@@ -197,7 +196,7 @@ Transaction.prototype.getBytes = function (trs, skipSignature, skipSecondSignatu
 		}
 
 		if (trs.recipientId) {
-		  let recipient = bpljs.customAddress.bs58checkDecode(trs.recipientId);
+			let recipient = bpljs.customAddress.bs58checkDecode(trs.recipientId);
 
 			for (i = 0; i < recipient.length; i++) {
 				bb.writeByte(recipient[i]);
@@ -591,7 +590,7 @@ Transaction.prototype.verify = function (trs, sender, requester, cb) {
 	}
 
 	// Check fee
-	if(!trs.fee || trs.fee < 1) {
+	if(!trs.fee || trs.fee < 1) {
 		return cb('Invalid transaction fee');
 	}
 
@@ -612,8 +611,8 @@ Transaction.prototype.verify = function (trs, sender, requester, cb) {
 
 //
 Transaction.prototype.verifyFee = function (trs) {
-  // Calculate fee
-	if(!trs.fee || trs.fee < 1) {
+	// Calculate fee
+	if(!trs.fee || trs.fee < 1) {
 		return false;
 	}
 
@@ -626,7 +625,7 @@ Transaction.prototype.verifyFee = function (trs) {
 	else {
 		return true;
 	}
-}
+};
 
 //
 //__API__ `verifySignature`
@@ -750,7 +749,7 @@ Transaction.prototype.apply = function (trs, block, sender, cb) {
 //
 Transaction.prototype.undo = function (trs, block, sender, cb) {
 	var amount = bignum(trs.amount.toString());
-	    amount = amount.plus(trs.fee.toString()).toNumber();
+	amount = amount.plus(trs.fee.toString()).toNumber();
 
 	this.scope.account.merge(sender.address, {
 		balance: amount,
@@ -819,7 +818,7 @@ Transaction.prototype.applyUnconfirmed = function (trs, sender, requester, cb) {
 //
 Transaction.prototype.undoUnconfirmed = function (trs, sender, cb) {
 	var amount = bignum(trs.amount.toString());
-	    amount = amount.plus(trs.fee.toString()).toNumber();
+	amount = amount.plus(trs.fee.toString()).toNumber();
 
 	this.scope.account.merge(sender.address, {u_balance: amount}, function (err, sender) {
 		if (err) {
@@ -1017,7 +1016,7 @@ Transaction.prototype.objectNormalize = function (trs) {
 	if (!report) {
 		var log=this.scope.logger;
 		throw 'Failed to validate transaction schema: ' + this.scope.schema.getLastErrors().map(function (err) {
-			log.error("details",err);
+			log.error('details',err);
 			return err.message;
 		}).join(', ');
 	}

@@ -1,4 +1,4 @@
-/* Alter tables */
+/* Alter transactions table */
 DO $$
     BEGIN
         BEGIN
