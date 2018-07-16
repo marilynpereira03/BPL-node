@@ -1011,7 +1011,6 @@ Transaction.prototype.objectNormalize = function (trs) {
 		}
 	}
 
-
 	var report = this.scope.schema.validate(trs, Transaction.prototype.schema);
 	if (!report) {
 		var log=this.scope.logger;
@@ -1020,13 +1019,13 @@ Transaction.prototype.objectNormalize = function (trs) {
 			return err.message;
 		}).join(', ');
 	}
-
 	try {
 		trs = __private.types[trs.type].objectNormalize.call(this, trs);
 	} catch (e) {
 		throw e;
 	}
-
+ if( trs.payload == 'undefined' || trs.payload == null )
+    trs.payload = null;
 	return trs;
 };
 

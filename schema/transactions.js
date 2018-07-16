@@ -59,6 +59,11 @@ module.exports = {
 				type: 'integer',
 				minimum: 0,
 				maximum: constants.fixedPoint
+			},
+			payload: {
+				type: 'string',
+				minimum: 0,
+				maximum: 256
 			}
 		}
 	},
@@ -73,7 +78,7 @@ module.exports = {
 			payload: {
 				type: 'string',
 				minLength: 1,
-				maxLength: 512
+				maxLength: 256
 			}
 		}
 	},
