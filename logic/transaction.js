@@ -1024,9 +1024,10 @@ Transaction.prototype.objectNormalize = function (trs) {
 	} catch (e) {
 		throw e;
 	}
- if( trs.payload == 'undefined' || trs.payload == null )
+
+ if(trs.payload === undefined || trs.payload === null)
     trs.payload = null;
-	return trs;
+ return trs;
 };
 
 //
