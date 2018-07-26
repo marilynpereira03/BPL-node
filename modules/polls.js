@@ -53,103 +53,6 @@ __private.attachApi = function () {
 	});
 };
 
-// Public methods
-
-//
-//__API__ `verify`
-
-// //
-// Polls.prototype.verify = function (transaction, cb) {
-// 	async.waterfall([
-// 		function setAccountAndGet (waterCb) {
-// 			modules.accounts.setAccountAndGet({publicKey: transaction.senderPublicKey}, waterCb);
-// 		},
-// 		function verifyTransaction (sender, waterCb) {
-// 			library.logic.transaction.verify(transaction, sender, waterCb);
-// 		}
-// 	], cb);
-// };
-//
-//
-//
-// //
-// //__API__ `apply`
-//
-// //
-// Polls.prototype.apply = function (transaction, block, cb) {
-// 	library.transactionSequence.add(function (sequenceCb){
-// 		library.logger.debug('Applying confirmed transaction', transaction.id);
-// 		modules.accounts.getAccount({publicKey: transaction.senderPublicKey}, function (err, sender) {
-// 			if (err) {
-// 				return sequenceCb(err);
-// 			}
-// 			library.logic.transaction.apply(transaction, block, sender, sequenceCb);
-// 		});
-// 	}, cb);
-// };
-//
-// //
-// //__API__ `undo`
-//
-// //
-// Polls.prototype.undo = function (transaction, block, cb) {
-// 	library.transactionSequence.add(function (sequenceCb){
-// 		library.logger.debug('Undoing confirmed transaction', transaction.id);
-// 		modules.accounts.getAccount({publicKey: transaction.senderPublicKey}, function (err, sender) {
-// 			if (err) {
-// 				return sequenceCb(err);
-// 			}
-// 			library.logic.transaction.undo(transaction, block, sender, sequenceCb);
-// 		});
-// 	}, cb);
-// };
-//
-// //
-// //__API__ `applyUnconfirmed`
-//
-// //
-// Polls.prototype.applyUnconfirmed = function (transaction, cb) {
-// 	modules.accounts.setAccountAndGet({publicKey: transaction.senderPublicKey}, function (err, sender) {
-// 		if (!sender && transaction.blockId !== genesisblock.block.id) {
-// 			return cb('Invalid block id');
-// 		} else {
-// 			library.transactionSequence.add(function (sequenceCb){
-// 				library.logger.debug('Applying unconfirmed transaction', transaction.id);
-// 				if (transaction.requesterPublicKey) {
-// 					modules.accounts.getAccount({publicKey: transaction.requesterPublicKey}, function (err, requester) {
-// 						if (err) {
-// 							return sequenceCb(err);
-// 						}
-//
-// 						if (!requester) {
-// 							return sequenceCb('Requester not found');
-// 						}
-//
-// 						library.logic.transaction.applyUnconfirmed(transaction, sender, requester, sequenceCb);
-// 					});
-// 				} else {
-// 					library.logic.transaction.applyUnconfirmed(transaction, sender, sequenceCb);
-// 				}
-// 			}, cb);
-// 		}
-// 	});
-// };
-//
-// //
-// //__API__ `undoUnconfirmed`
-//
-// //
-// Polls.prototype.undoUnconfirmed = function (transaction, cb) {
-// 	library.transactionSequence.add(function (sequenceCb){
-// 		library.logger.debug('Undoing unconfirmed transaction', transaction.id);
-// 		modules.accounts.getAccount({publicKey: transaction.senderPublicKey}, function (err, sender) {
-// 			if (err) {
-// 				return sequenceCb(err);
-// 			}
-// 			library.logic.transaction.undoUnconfirmed(transaction, sender, sequenceCb);
-// 		});
-// 	}, cb);
-// };
 
 // Events
 //
@@ -180,22 +83,8 @@ Polls.prototype.onAttachPublicApi = function () {
 Polls.prototype.onPeersReady = function () {
 };
 
-Polls.prototype.isDuplicateAddress = function (pollAddress,cb) {
-	library.db.query(sql.countByAddress, {pollAddress: pollAddress}).then(function (rows) {
-		if (!rows.length) {
-			return cb(null);
-		}
-		return cb(true);
-	}).catch(function (err) {
-		library.logger.error('stack', err);
-		return cb('Polls#getContract error');
-	});
-
-};
-
-
-Polls.prototype.isDuplicatePoll = function (pollName,cb) {
-	library.db.query(sql.countByPoll, {pollName: pollName}).then(function (rows) {
+Polls.prototype.isDuplicateAddress = function (address,cb) {
+	library.db.query(sql.countByAddress, {address: address}).then(function (rows) {
 		if (!rows.length) {
 			return cb(null);
 		}
@@ -214,7 +103,7 @@ shared.getByAddress = function (req, cb) {
 			return cb(err[0].message);
 		}
 
-		library.db.query(sql.getPollResultByAddress, {pollAddress: req.body.address}).then(function (rows) {
+		library.db.query(sql.getPollResultByAddress, {address: req.body.address}).then(function (rows) {
 			console.log("rows",rows);
 			if (!rows.length) {
 				return cb('Poll not found: ' +req.body.address);
