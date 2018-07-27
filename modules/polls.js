@@ -36,7 +36,7 @@ __private.attachApi = function () {
 	});
 
 	router.map(shared, {
-			"get /getByAddress": "getByAddress"
+		"get /getByAddress": "getByAddress"
 	});
 
 	router.use(function (req, res, next) {
@@ -102,7 +102,6 @@ shared.getByAddress = function (req, cb) {
 		}
 
 		library.db.query(sql.getPollResultByAddress, {address: req.body.address}).then(function (rows) {
-			console.log("rows",rows);
 			if (!rows.length) {
 				return cb("Poll not found: " +req.body.address);
 			}
