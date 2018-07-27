@@ -1,6 +1,6 @@
-'use strict';
+"use strict";
 
-var constants = require('../constants.json');
+var constants = require("../constants.json");
 
 // Private fields
 var modules, library;
@@ -44,44 +44,52 @@ Poll.prototype.calculateFee = function (trs) {
 Poll.prototype.verify = function (trs, sender, cb) {
 	var isAddress = /^[1-9A-Za-z_]{1,45}$/g;
 
-if (!trs.asset || !trs.asset.poll){
-  return cb('Invalid transaction asset');
-}
+	if (!trs.asset || !trs.asset.poll){
+		return cb("Invalid transaction asset");
+	}
 
-if (!trs.asset.poll.name){
-  return cb('Invalid poll name');
-}
+	if (!trs.asset.poll.name){
+		return cb("Invalid poll name");
+	}
 
-if (!trs.asset.poll.startTimestamp){
-  return cb('Invalid poll start date');
-}
+	if (!trs.asset.poll.startTimestamp){
+		return cb("Invalid poll start date");
+	}
 
-if (!trs.asset.poll.endTimestamp){
-  return cb('Invalid poll end date');
-}
+	if (!trs.asset.poll.endTimestamp){
+		return cb("Invalid poll end date");
+	}
 
-if (!trs.asset.poll.address){
-  return cb('Invalid poll address');
-}
+	if (!trs.asset.poll.address){
+		return cb("Invalid poll address");
+	}
 
-if(trs.timestamp > trs.asset.poll.startTimestamp){
-  return cb('start timestamp should be greater than now timestamp');
-}
+	if (!trs.asset.poll.intentions){
+		return cb("Invalid intentions");
+	}
 
-if(trs.asset.poll.endTimestamp<=trs.asset.poll.startTimestamp){
-  return cb('Poll start date must be smaller than Poll end date');
-}
+	if(trs.asset.poll.intentions.length<2){
+		return cb("Minimum 2 intentions are required");
+	}
 
-if (!trs.asset.poll.address || !isAddress.test(trs.asset.poll.address)){
-  return cb('Invalid Address');
-}
+	if(trs.timestamp > trs.asset.poll.startTimestamp){
+		return cb("start timestamp should be greater than now timestamp");
+	}
 
-if(trs.asset.poll.address){
-  modules.polls.isDuplicateAddress(trs.asset.poll.address,function(err){
-    if(err)
-    return cb('Poll Address is already used. Must have unique address');
-  });
-}
+	if(trs.asset.poll.endTimestamp<=trs.asset.poll.startTimestamp){
+		return cb("Poll start date must be smaller than Poll end date");
+	}
+
+	if (!trs.asset.poll.address || !isAddress.test(trs.asset.poll.address)){
+		return cb("Invalid Address");
+	}
+
+	if(trs.asset.poll.address){
+		modules.polls.isDuplicateAddress(trs.asset.poll.address,function(err){
+			if(err)
+				return cb("Poll Address is already used. Must have unique address");
+		});
+	}
 
 	return cb(null, trs);
 };
@@ -99,20 +107,20 @@ Poll.prototype.process = function (trs, sender, cb) {
 
 //
 Poll.prototype.getBytes = function (trs) {
-  if (!trs.asset.poll.address) {
-  		return null;
-  	}
+	if (!trs.asset.poll.address){
+		return null;
+	}
 
   	var buf;
 
-  	try {
-  		buf = new Buffer(trs.asset.poll.address, 'utf8');
-  	} catch (e) {
-  		throw e;
-  	}
+	try {
+		buf = new Buffer(trs.asset.poll.address, "utf8");
+	} catch (e) {
+		throw e;
+	}
 
   	return buf;
-  };
+};
 
 //
 //__API__ `apply`
@@ -187,30 +195,30 @@ Poll.prototype.dbRead = function (raw) {
 	return null;
 };
 
-Poll.prototype.dbTable = 'poll';
+Poll.prototype.dbTable = "polls";
 
 Poll.prototype.dbFields = [
-	'name',
-  'startTimestamp',
-  'endTimestamp',
-  'address',
-  'intentions',
-	'transactionId'
+	"name",
+	"startTimestamp",
+	"endTimestamp",
+	"address",
+	"intentions",
+	"transactionId"
 ];
 //
 //__API__ `dbSave`
 
 //
 Poll.prototype.dbSave = function (trs) {
-  return {
+	return {
 		table: this.dbTable,
 		fields: this.dbFields,
 		values: {
 			name: trs.asset.poll.name,
-      startTimestamp: trs.asset.poll.startTimestamp,
-      endTimestamp: trs.asset.poll.endTimestamp,
-      address: trs.asset.poll.address,
-      intentions: trs.asset.poll.intentions.toString(),
+			startTimestamp: trs.asset.poll.startTimestamp,
+			endTimestamp: trs.asset.poll.endTimestamp,
+			address: trs.asset.poll.address,
+			intentions: trs.asset.poll.intentions.toString(),
 			transactionId: trs.id
 		}
 	};
