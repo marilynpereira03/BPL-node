@@ -1,11 +1,11 @@
 'use strict';
 
 var AutoUpdatesSql = {
+	getByTransactionId: 'SELECT * FROM autoupdates WHERE "transactionId" = ${transactionId}',
 
-	getLatest: 'select * from autoupdates order by id desc limit 1',
+	getLatest: 'SELECT * FROM autoupdates WHERE "verifyingTransactionId" IS NOT NULL ORDER BY id DESC LIMIT 1',
 
 	update: 'UPDATE autoupdates SET "transactionId" = ${transactionId}, "verifyingTransactionId" = ${verifyingTransactionId} WHERE "transactionId" = ${verifyingTransactionId}'
-
 };
 
 module.exports = AutoUpdatesSql;

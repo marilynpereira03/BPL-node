@@ -3,11 +3,46 @@ var constants = require('../constants.json');
 var sql = require('../sql/autoUpdates.js');
 
 // Private fields
-var modules, library;
+var modules, library, __private = {};
 
 // Constructor
 function AutoUpdate () {}
 
+__private.validateTransactionAsset = function (data, cb) {
+	console.log('In validateTransactionAsset',data);
+	library.db.query(sql.getByTransactionId, { transactionId: data.verifyingTransactionId}).then(function (rows) {
+		if (rows.length) {
+			var valid = true, msg = '';
+
+			if (rows[0].verifyingTransactionId === null) {
+				var properties = {
+					versionLabel: data.versionLabel,
+					triggerHeight: data.triggerHeight,
+					ipfsHash: data.ipfsHash,
+					ipfsPath: data.ipfsPath
+				};
+
+				for (var prop in properties) {
+					if(data[prop] !== rows[0][prop]) {
+						msg = 'Invalid transaction '+prop+' asset.';
+						valid = false;
+						break;
+					}
+				}
+
+				if (!valid) {
+					return cb(msg);
+				}
+				return cb(null);
+			}
+			return cb ('Auto update has already been verified.');
+		}
+		return cb ('Invalid verifying transaction id.');
+	}).catch(function (err) {
+		library.logger.error('stack', err.stack);
+		return cb('Failed to get verifying transaction.');
+	});
+};
 // Public methods
 //
 //__API__ `bind`
@@ -42,6 +77,7 @@ AutoUpdate.prototype.calculateFee = function (trs) {
 
 //
 AutoUpdate.prototype.verify = function (trs, sender, cb) {
+	console.log('In verify',trs.id);
 	if (!trs.asset || !trs.asset.autoUpdate) {
 		return cb('Invalid transaction asset.');
 	}
@@ -49,6 +85,7 @@ AutoUpdate.prototype.verify = function (trs, sender, cb) {
 		return cb('Invalid version label asset.');
 	}
 	//TODO validate ipfsHash length and db datatype
+	//and unique hash
 	if (!trs.asset.autoUpdate.ipfsHash && !trs.asset.autoUpdate.ipfsHash.length) {
 		return cb('Invalid IPFS hash asset.');
 	}
@@ -68,13 +105,12 @@ AutoUpdate.prototype.verify = function (trs, sender, cb) {
 		return cb('Invalid verifying transaction id asset.');
 	}
 	else if (trs.asset.autoUpdate.verifyingTransactionId) {
-		modules.transactions.getTransaction(trs.asset.autoUpdate.verifyingTransactionId,
-			function (err) {
-				if (err) {
-					return cb('Invalid verifying transaction id asset.');
-				}
-				return cb(null, trs);
-			});
+		__private.validateTransactionAsset(trs.asset.autoUpdate, function (err) {
+			if (err) {
+				return cb(err);
+			}
+			return cb(null, trs);
+		});
 	}
 	else {
 		return cb(null, trs);
@@ -169,7 +205,6 @@ AutoUpdate.prototype.schema = {
 AutoUpdate.prototype.objectNormalize = function (trs) {
 	var report = library.schema.validate(trs.asset.autoUpdate, AutoUpdate.prototype.schema);
 
-	console.log('>>>>>>>>>>>>>>>> objectNormalize',report);
 	if (!report) {
 		throw 'Failed to validate autoupdate schema: ' + this.scope.schema.getLastErrors().map(function (err) {
 			return err.message;
