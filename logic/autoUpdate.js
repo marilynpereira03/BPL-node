@@ -52,19 +52,33 @@ AutoUpdate.prototype.verify = function (trs, sender, cb) {
 	if (!trs.asset.autoUpdate.ipfsHash && !trs.asset.autoUpdate.ipfsHash.length) {
 		return cb('Invalid IPFS hash asset.');
 	}
-	//TODO validate if triggerHeight is greater than current height
 	if (!trs.asset.autoUpdate.triggerHeight) {
 		return cb('Invalid trigger height asset.');
+	}
+	else {
+		var block = modules.blockchain.getLastBlock();
+		if (trs.asset.autoUpdate.triggerHeight <= block.height) {
+			return cb('Invalid trigger height asset.');
+		}
 	}
 	if (!trs.asset.autoUpdate.ipfsPath && !trs.asset.autoUpdate.ipfsPath.length) {
 		return cb('Invalid IPFS path asset.');
 	}
-	//TODO validate if this tx id exists
 	if (trs.asset.autoUpdate.verifyingTransactionId === undefined) {
 		return cb('Invalid verifying transaction id asset.');
 	}
-
-	return cb(null, trs);
+	else if (trs.asset.autoUpdate.verifyingTransactionId) {
+		modules.transactions.getTransaction(trs.asset.autoUpdate.verifyingTransactionId,
+			function (err) {
+				if (err) {
+					return cb('Invalid verifying transaction id asset.');
+				}
+				return cb(null, trs);
+			});
+	}
+	else {
+		return cb(null, trs);
+	}
 };
 
 //
@@ -80,7 +94,7 @@ AutoUpdate.prototype.process = function (trs, sender, cb) {
 
 //
 AutoUpdate.prototype.getBytes = function (trs) {
-	if(!trs.asset.autoUpdate.ipfsHash) {
+	if (!trs.asset.autoUpdate.ipfsHash) {
 		return null;
 	}
 
@@ -155,6 +169,7 @@ AutoUpdate.prototype.schema = {
 AutoUpdate.prototype.objectNormalize = function (trs) {
 	var report = library.schema.validate(trs.asset.autoUpdate, AutoUpdate.prototype.schema);
 
+	console.log('>>>>>>>>>>>>>>>> objectNormalize',report);
 	if (!report) {
 		throw 'Failed to validate autoupdate schema: ' + this.scope.schema.getLastErrors().map(function (err) {
 			return err.message;
@@ -188,7 +203,7 @@ AutoUpdate.prototype.dbFields = [
 ];
 
 AutoUpdate.prototype.dbSave = function (trs) {
-	if(trs.asset.autoUpdate.verifyingTransactionId) {
+	if (trs.asset.autoUpdate.verifyingTransactionId) {
 		library.db.none(sql.update, {transactionId: trs.id, verifyingTransactionId: trs.asset.autoUpdate.verifyingTransactionId})
 			.then(function () {
 			}).catch(function (err) {

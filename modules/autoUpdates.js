@@ -50,7 +50,7 @@ shared.getLatest = function (req, cb) {
 			return cb(null, { update: row });
 		}
 		else {
-			//return cb(null, { update: row });
+			return cb('Couldn\'t find latest auto update.');
 		}
 
 	}).catch(function (err) {
