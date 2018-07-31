@@ -1,6 +1,6 @@
 'use strict';
 var constants = require('../constants.json');
-//var sql = require('../sql/autoUpdate.js');
+var sql = require('../sql/autoUpdates.js');
 
 // Private fields
 var modules, library;
@@ -45,10 +45,10 @@ AutoUpdate.prototype.verify = function (trs, sender, cb) {
 	if (!trs.asset || !trs.asset.autoUpdate) {
 		return cb('Invalid transaction asset.');
 	}
-	if (!trs.asset.autoUpdate.versionLabel) {
+	if (!trs.asset.autoUpdate.versionLabel && !trs.asset.autoUpdate.versionLabel.length) {
 		return cb('Invalid version label asset.');
 	}
-	//TODO validate ipfsHash length
+	//TODO validate ipfsHash length and db datatype
 	if (!trs.asset.autoUpdate.ipfsHash && !trs.asset.autoUpdate.ipfsHash.length) {
 		return cb('Invalid IPFS hash asset.');
 	}
@@ -100,12 +100,7 @@ AutoUpdate.prototype.getBytes = function (trs) {
 
 //
 AutoUpdate.prototype.apply = function (trs, block, sender, cb) {
-	//TODO see if below code is needed
-	var data = {
-		address: sender.address
-	};
-
-	modules.accounts.setAccountAndGet(data, cb);
+	modules.accounts.setAccountAndGet({address: sender.address}, cb);
 };
 
 //
@@ -113,19 +108,7 @@ AutoUpdate.prototype.apply = function (trs, block, sender, cb) {
 
 //
 AutoUpdate.prototype.undo = function (trs, block, sender, cb) {
-	modules.accounts.setAccountAndGet({address: trs.recipientId}, function (err, recipient) {
-		if (err) {
-			return cb(err);
-		}
-
-		modules.accounts.mergeAccountAndGet({
-			address: trs.recipientId,
-			balance: -trs.amount,
-			u_balance: -trs.amount,
-			blockId: block.id,
-			round: modules.rounds.getRoundFromHeight(block.height)
-		}, cb);
-	});
+	modules.accounts.setAccountAndGet({address: sender.address}, cb);
 };
 
 //
@@ -148,7 +131,9 @@ AutoUpdate.prototype.schema = {
 	id: 'Update',
 	type: 'object',
 	properties: {
-		//  triggerHeight: 1000,
+		triggerHeight: {
+			type: 'integer',
+		},
 		//  verifyingTransactionId: null
 		versionLabel: {
 			type: 'string',
@@ -191,7 +176,7 @@ AutoUpdate.prototype.dbRead = function (raw) {
 //__API__ `dbSave`
 
 //
-AutoUpdate.prototype.dbTable = 'autoupdate';
+AutoUpdate.prototype.dbTable = 'autoupdates';
 
 AutoUpdate.prototype.dbFields = [
 	'transactionId',
@@ -203,8 +188,14 @@ AutoUpdate.prototype.dbFields = [
 ];
 
 AutoUpdate.prototype.dbSave = function (trs) {
-	if(trs.asset.autoUpdate.verifyingTransactionId)
-	{
+	if(trs.asset.autoUpdate.verifyingTransactionId) {
+		library.db.none(sql.update, {transactionId: trs.id, verifyingTransactionId: trs.asset.autoUpdate.verifyingTransactionId})
+			.then(function () {
+			}).catch(function (err) {
+				library.logger.error('stack', err.stack);
+			});
+	}
+	else {
 		return {
 			table: this.dbTable,
 			fields: this.dbFields,
