@@ -111,7 +111,7 @@ Poll.prototype.getBytes = function (trs) {
 		return null;
 	}
 
-  	var buf;
+	var buf;
 
 	try {
 		buf = new Buffer(trs.asset.poll.address, "utf8");
@@ -119,7 +119,7 @@ Poll.prototype.getBytes = function (trs) {
 		throw e;
 	}
 
-  	return buf;
+	return buf;
 };
 
 //
@@ -218,7 +218,7 @@ Poll.prototype.dbSave = function (trs) {
 			startTimestamp: trs.asset.poll.startTimestamp,
 			endTimestamp: trs.asset.poll.endTimestamp,
 			address: trs.asset.poll.address,
-			intentions: trs.asset.poll.intentions.toString(),
+			intentions: JSON.stringify(trs.asset.poll.intentions),
 			transactionId: trs.id
 		}
 	};

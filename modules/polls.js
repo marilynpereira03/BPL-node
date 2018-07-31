@@ -6,6 +6,7 @@ var Router = require("../helpers/router.js");
 var schema = require("../schema/polls.js");
 var sql = require("../sql/polls.js");
 var Poll = require("../logic/poll.js");
+var epochTime = require("../constants.json").epochTime;
 var transactionTypes = require("../helpers/transactionTypes.js");
 
 // Private fields
@@ -36,14 +37,16 @@ __private.attachApi = function () {
 	});
 
 	router.map(shared, {
-		"get /getByAddress": "getByAddress"
+		"get /getByAddress": "getByAddress",
+		"get /": "getPolls",
+		"get /get": "getPoll"
 	});
 
 	router.use(function (req, res, next) {
 		res.status(500).send({success: false, error: "API endpoint not found"});
 	});
 
-	library.network.app.use("/api/poll", router);
+	library.network.app.use("/api/polls", router);
 	library.network.app.use(function (err, req, res, next) {
 		if (!err) { return next(); }
 		library.logger.error("API error " + req.url, err);
@@ -51,7 +54,50 @@ __private.attachApi = function () {
 	});
 };
 
+// Private methods
 
+__private.getAllPolls = function (cb) {
+	library.db.query(sql.getAllPolls).then(function (rows) {
+		var count = rows.length ? rows[0].count : 0;
+		if (!rows.length) {
+			return cb("Polls not found");
+		}
+		rows =__private.normalize(rows);
+		return cb(null, {polls:rows});
+	}).catch(function (err) {
+		library.logger.error("stack", err);
+		return cb("Polls#getAllPolls error"+err);
+	});
+};
+
+__private.getPoll = function (name, cb) {
+	library.db.query(sql.getPoll,{name: name}).then(function (rows) {
+		var count = rows.length ? rows[0].count : 0;
+		if (!rows.length) {
+			return cb("Poll not found: " + name);
+		}
+		rows =__private.normalize(rows);
+		return cb(null, {polls:rows});
+	}).catch(function (err) {
+		library.logger.error("stack", err);
+		return cb("Polls#getPoll error"+err);
+	});
+};
+
+__private.getDate = function(timestamp) {
+	var epochTimestamp = new Date(epochTime).getTime() / 1000;
+	timestamp+=epochTimestamp;
+	return (new Date(timestamp*1000));
+};
+
+__private.normalize = function(rows){
+	for(var i=0;i<rows.length;i++){
+		rows[i].intentions = JSON.parse(rows[i].intentions);
+		rows[i].startdate = __private.getDate(rows[i].startdate);
+		rows[i].enddate = __private.getDate(rows[i].enddate);
+	}
+	return rows;
+};
 // Events
 //
 //__EVENT__ `onBind`
@@ -96,7 +142,7 @@ Polls.prototype.isDuplicateAddress = function (address,cb) {
 
 // Shared
 shared.getByAddress = function (req, cb) {
-	library.schema.validate(req.body.address, schema.getByAddress, function (err) {
+	library.schema.validate(req.body, schema.getByAddress, function (err) {
 		if (err) {
 			return cb(err[0].message);
 		}
@@ -105,7 +151,7 @@ shared.getByAddress = function (req, cb) {
 			if (!rows.length) {
 				return cb("Poll not found: " +req.body.address);
 			}
-			var rawasset = JSON.stringify(rows[0]);
+			rows =__private.normalize(rows);
 			return cb(null, { polls: rows });
 		}).catch(function (err) {
 			library.logger.error("stack", err);
@@ -114,5 +160,32 @@ shared.getByAddress = function (req, cb) {
 	});
 };
 
+shared.getPolls = function (req, cb) {
+	library.schema.validate(req.body, schema.getPolls, function (err) {
+		if (err) {
+			return cb(err[0].message);
+		}
+		__private.getAllPolls(function(err,res){
+			if(err)
+				cb(err);
+			else
+				cb(null,res);
+		});
+	});
+};
+
+shared.getPoll = function (req, cb) {
+	library.schema.validate(req.body, schema.getPoll, function (err) {
+		if (err) {
+			return cb(err[0].message);
+		}
+		__private.getPoll(req.body.name,function(err,res){
+			if(err)
+				cb(err);
+			else
+				cb(null,res);
+		});
+	});
+};
 // Export
 module.exports = Polls;
