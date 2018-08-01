@@ -18,7 +18,8 @@ module.exports = {
 		type: "object",
 		properties: {
 			name: {
-				type: "string"
+				type: "string",
+				minLength: 1,
 			}
 		},
 		required: ["name"]
@@ -28,7 +29,8 @@ module.exports = {
 		type: "object",
 		properties: {
 			name: {
-				type: "string"
+				type: "string",
+				minLength: 1,
 			},
 			address: {
 				type: "string",

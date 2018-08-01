@@ -166,10 +166,12 @@ shared.getPolls = function (req, cb) {
 			return cb(err[0].message);
 		}
 		__private.getAllPolls(function(err,res){
-			if(err)
+			if(err) {
 				cb(err);
-			else
+			}
+			else {
 				cb(null,res);
+			}
 		});
 	});
 };
@@ -180,10 +182,12 @@ shared.getPoll = function (req, cb) {
 			return cb(err[0].message);
 		}
 		__private.getPoll(req.body.name,function(err,res){
-			if(err)
+			if(err) {
 				cb(err);
-			else
+			}
+			else {
 				cb(null,res);
+			}
 		});
 	});
 };

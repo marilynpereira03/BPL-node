@@ -57,37 +57,37 @@ Poll.prototype.verify = function (trs, sender, cb) {
 	}
 
 	if (!trs.asset.poll.endTimestamp){
-		return cb("Invalid poll end date");
-	}
-
-	if (!trs.asset.poll.address){
-		return cb("Invalid poll address");
+		return cb("Invalid poll end date.");
 	}
 
 	if (!trs.asset.poll.intentions){
-		return cb("Invalid intentions");
+		return cb("Invalid poll intentions.");
+	}
+
+	if (!Array.isArray(trs.asset.poll.intentions)) {
+		return cb("Poll intentions should be array.");
 	}
 
 	if(trs.asset.poll.intentions.length<2){
-		return cb("Minimum 2 intentions are required");
+		return cb("Minimum 2 intentions are required.");
 	}
 
 	if(trs.timestamp > trs.asset.poll.startTimestamp){
-		return cb("start timestamp should be greater than now timestamp");
+		return cb("Poll start timestamp should be greater than current timestamp.");
 	}
 
-	if(trs.asset.poll.endTimestamp<=trs.asset.poll.startTimestamp){
-		return cb("Poll start date must be smaller than Poll end date");
+	if(trs.asset.poll.endTimestamp <= trs.asset.poll.startTimestamp){
+		return cb("Poll start timestamp should be smaller than poll end timestamp.");
 	}
 
 	if (!trs.asset.poll.address || !isAddress.test(trs.asset.poll.address)){
-		return cb("Invalid Address");
+		return cb("Invalid poll Address.");
 	}
 
 	if(trs.asset.poll.address){
 		modules.polls.isDuplicateAddress(trs.asset.poll.address,function(err){
 			if(err)
-				return cb("Poll Address is already used. Must have unique address");
+				return cb("Poll Address is already exists.");
 		});
 	}
 
