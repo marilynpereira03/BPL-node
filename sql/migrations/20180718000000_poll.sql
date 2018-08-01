@@ -1,14 +1,4 @@
 BEGIN;
-/* Alter transactions table */
-DO $$
-    BEGIN
-        BEGIN
-            ALTER TABLE transactions ADD COLUMN payload VARCHAR(50) default NULL;
-        EXCEPTION
-            WHEN duplicate_column THEN RAISE NOTICE 'column payload already exists in transactions, skipping';
-        END;
-    END;
-$$
 
 CREATE TABLE IF NOT EXISTS "polls"(
   "name" VARCHAR(50) NOT NULL,
@@ -21,3 +11,14 @@ CREATE TABLE IF NOT EXISTS "polls"(
 );
 
 COMMIT;
+
+/* Alter transactions table */
+DO $$
+    BEGIN
+        BEGIN
+            ALTER TABLE transactions ADD COLUMN payload VARCHAR(50) default NULL;
+        EXCEPTION
+            WHEN duplicate_column THEN RAISE NOTICE 'column payload already exists in transactions, skipping';
+        END;
+    END;
+$$
