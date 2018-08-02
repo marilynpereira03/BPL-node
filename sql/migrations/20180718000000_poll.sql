@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS "polls"(
   "address" VARCHAR(50) UNIQUE NOT NULL,
   "startTimestamp" INT NOT NULL,
   "endTimestamp" INT NOT NULL,
-  "intentions" VARCHAR(100) NOT NULL,
+  "intentions" TEXT[] NOT NULL,
   "transactionId" VARCHAR(64) NOT NULL,
   FOREIGN KEY("transactionId") REFERENCES transactions(id) ON DELETE CASCADE
 );

@@ -65,7 +65,7 @@ Poll.prototype.verify = function (trs, sender, cb) {
 	}
 
 	if (!Array.isArray(trs.asset.poll.intentions)) {
-		return cb("Poll intentions should be array.");
+		return cb("Invalid poll intentions. Must be an array.");
 	}
 
 	if(trs.asset.poll.intentions.length<2){
@@ -218,7 +218,7 @@ Poll.prototype.dbSave = function (trs) {
 			startTimestamp: trs.asset.poll.startTimestamp,
 			endTimestamp: trs.asset.poll.endTimestamp,
 			address: trs.asset.poll.address,
-			intentions: JSON.stringify(trs.asset.poll.intentions),
+			intentions: trs.asset.poll.intentions,
 			transactionId: trs.id
 		}
 	};
