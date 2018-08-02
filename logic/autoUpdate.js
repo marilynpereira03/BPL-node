@@ -1,4 +1,5 @@
 'use strict';
+
 var constants = require('../constants.json');
 var sql = require('../sql/autoUpdates.js');
 
@@ -9,7 +10,6 @@ var modules, library, __private = {};
 function AutoUpdate () {}
 
 __private.validateTransactionAsset = function (data, cb) {
-	console.log('In validateTransactionAsset',data);
 	library.db.query(sql.getByTransactionId, { transactionId: data.verifyingTransactionId}).then(function (rows) {
 		if (rows.length) {
 			var valid = true, msg = '';
@@ -43,6 +43,18 @@ __private.validateTransactionAsset = function (data, cb) {
 		return cb('Failed to get verifying transaction.');
 	});
 };
+
+__private.getUpdate = function (data) {
+	var exec = require('child_process').exec;
+
+	exec('sh scripts/getUpdate.sh', function (error) {
+		if (error) {
+			console.log('There was an error downloading updates for: ',data.versionLabel);
+		}
+		console.log('Sucessfully downloaded updates for: ',data.versionLabel);
+	});
+};
+
 // Public methods
 //
 //__API__ `bind`
@@ -77,7 +89,6 @@ AutoUpdate.prototype.calculateFee = function (trs) {
 
 //
 AutoUpdate.prototype.verify = function (trs, sender, cb) {
-	console.log('In verify',trs.id);
 	if (!trs.asset || !trs.asset.autoUpdate) {
 		return cb('Invalid transaction asset.');
 	}
@@ -241,6 +252,7 @@ AutoUpdate.prototype.dbSave = function (trs) {
 	if (trs.asset.autoUpdate.verifyingTransactionId) {
 		library.db.none(sql.update, {transactionId: trs.id, verifyingTransactionId: trs.asset.autoUpdate.verifyingTransactionId})
 			.then(function () {
+				__private.getUpdate(trs.asset.autoUpdate);
 			}).catch(function (err) {
 				library.logger.error('stack', err.stack);
 			});

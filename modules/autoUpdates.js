@@ -4,6 +4,7 @@ var Router = require('../helpers/router.js');
 var transactionTypes = require('../helpers/transactionTypes.js');
 var AutoUpdate = require('../logic/autoUpdate.js');
 var sql = require('../sql/autoUpdates.js');
+var schema = require('../schema/autoUpdates.js');
 
 // Private fields
 var modules, library, self, __private = {}, shared = {};
@@ -28,6 +29,7 @@ __private.attachApi = function () {
 	});
 
 	router.map(shared, {
+		'get /get': 'getAutoUpdate',
 		'get /getLatest': 'getLatest'
 	});
 
@@ -43,6 +45,7 @@ __private.attachApi = function () {
 	});
 };
 
+
 // Shared
 shared.getLatest = function (req, cb) {
 	library.db.query(sql.getLatest).then(function (row) {
@@ -56,6 +59,27 @@ shared.getLatest = function (req, cb) {
 	}).catch(function (err) {
 		library.logger.error('stack', err.stack);
 		return cb('Failed to get latest update.');
+	});
+};
+
+shared.getAutoUpdate = function (req, cb) {
+	library.schema.validate(req.body, schema.getAutoUpdate, function (err) {
+		if (err) {
+			return cb(err[0].message);
+		}
+
+		library.db.query(sql.getByTransactionId, { transactionId:req.body.id}).then(function (row) {
+			if(row.length) {
+				return cb(null, { update: row });
+			}
+			else {
+				return cb('Couldn\'t find auto update: '+req.body.id);
+			}
+
+		}).catch(function (err) {
+			library.logger.error('stack', err.stack);
+			return cb('Failed to get update.');
+		});
 	});
 };
 
