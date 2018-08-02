@@ -47,7 +47,7 @@ __private.validateTransactionAsset = function (data, cb) {
 __private.getUpdate = function (data) {
 	var exec = require('child_process').exec;
 
-	exec('sh scripts/getUpdate.sh', function (error) {
+	exec('sh scripts/getUpdate.sh '+data.ipfsHash, function (error) {
 		if (error) {
 			console.log('There was an error downloading updates for: ',data.versionLabel);
 		}
