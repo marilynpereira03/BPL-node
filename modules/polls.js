@@ -92,7 +92,6 @@ __private.getDate = function(timestamp) {
 
 __private.normalize = function(rows){
 	for(var i=0;i<rows.length;i++){
-		rows[i].intentions = JSON.parse(rows[i].intentions);
 		rows[i].startdate = __private.getDate(rows[i].startdate);
 		rows[i].enddate = __private.getDate(rows[i].enddate);
 	}
@@ -149,9 +148,8 @@ shared.getByAddress = function (req, cb) {
 
 		library.db.query(sql.getPollResultByAddress, {address: req.body.address}).then(function (rows) {
 			if (!rows.length) {
-				return cb("Poll not found: " +req.body.address);
+				return cb("No vote transactions for poll address: " +req.body.address);
 			}
-			rows =__private.normalize(rows);
 			return cb(null, { polls: rows });
 		}).catch(function (err) {
 			library.logger.error("stack", err);
