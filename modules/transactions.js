@@ -141,7 +141,6 @@ __private.list = function (filter, cb) {
 			for (var i = 0; i < rows.length; i++) {
 				transactions.push(library.logic.transaction.dbRead(rows[i]));
 			}
-
 			var data = {
 				transactions: transactions,
 				count: count
@@ -167,6 +166,28 @@ __private.getById = function (id, cb) {
 		var transaction = library.logic.transaction.dbRead(rows[0]);
 
 		return cb(null, transaction);
+	}).catch(function (err) {
+		library.logger.error('stack', err);
+		return cb('Transactions#getById error');
+	});
+};
+
+__private.getByPayload = function (payload, cb) {
+	library.db.query(sql.getByPayload, {payload: payload}).then(function (rows) {
+		var count = rows.length ? rows[0].count : 0;
+		if (!rows.length) {
+			return cb('Transaction not found: ' + payload);
+		}
+
+		var transactions = [];
+		for (var i = 0; i < rows.length; i++) {
+			transactions.push(library.logic.transaction.dbRead(rows[i]));
+		}
+		var data = {
+			transactions: transactions,
+			count: count
+		};
+		return cb(null, rows);
 	}).catch(function (err) {
 		library.logger.error('stack', err);
 		return cb('Transactions#getById error');
@@ -352,7 +373,6 @@ shared.getTransactions = function (req, cb) {
 			if (err) {
 				return cb('Failed to get transactions: ' + err);
 			}
-
 			return cb(null, {transactions: data.transactions, count: data.count});
 		});
 	});
@@ -363,19 +383,47 @@ shared.getTransaction = function (req, cb) {
 		if (err) {
 			return cb(err[0].message);
 		}
-
-		__private.getById(req.body.id, function (err, transaction) {
-			if (!transaction || err) {
-				return cb('Transaction not found');
-			}
-			if (transaction.type == 3) {
-				__private.getVotesById(transaction, function (err, transaction) {
+		if(req.body.id){
+			__private.getById(req.body.id, function (err, transaction) {
+				if (!transaction || err) {
+					return cb('Transaction not found');
+				}
+				if (transaction.type == 3) {
+					__private.getVotesById(transaction, function (err, transaction) {
+						return cb(null, {transaction: transaction});
+					});
+				} else {
 					return cb(null, {transaction: transaction});
+				}
+			});
+		}
+		else {
+			if (req.body.payload) {
+				__private.getByPayload(req.body.payload, function (err, transactions) {
+					if (!transactions || err) {
+						return cb('Transaction not found');
+					}
+					async.map(transactions, function(transaction,callback){
+						if (transaction.type == 3) {
+							__private.getVotesById(transaction, function (err, transaction) {
+								return callback(null, transaction);
+							});
+						} else {
+							return callback(null, transaction);
+						}
+					}, function (err, res) {
+						if (err) {
+							cb(err);
+						}
+						cb(null, {success: true , transactions: res });
+					});
+
 				});
-			} else {
-				return cb(null, {transaction: transaction});
 			}
-		});
+			else {
+				return cb(null, {success: false, error: 'Missing required property: id or payload'});
+			}
+		}
 	});
 };
 

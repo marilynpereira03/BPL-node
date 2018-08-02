@@ -7,5 +7,6 @@ module.exports = {
 	VOTE: 3,
 	MULTI: 4,
 	IPFS: 5,
-	AUTOUPDATE: 8
+	AUTOUPDATE: 8,
+	POLL: 9
 };
