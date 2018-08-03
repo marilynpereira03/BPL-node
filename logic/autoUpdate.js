@@ -13,29 +13,25 @@ __private.validateTransactionAsset = function (data, cb) {
 	library.db.query(sql.getByTransactionId, { transactionId: data.verifyingTransactionId}).then(function (rows) {
 		if (rows.length) {
 			var valid = true, msg = '';
+			var properties = {
+				versionLabel: data.versionLabel,
+				triggerHeight: data.triggerHeight,
+				ipfsHash: data.ipfsHash,
+				ipfsPath: data.ipfsPath
+			};
 
-			if (rows[0].verifyingTransactionId === null) {
-				var properties = {
-					versionLabel: data.versionLabel,
-					triggerHeight: data.triggerHeight,
-					ipfsHash: data.ipfsHash,
-					ipfsPath: data.ipfsPath
-				};
-
-				for (var prop in properties) {
-					if(data[prop] !== rows[0][prop]) {
-						msg = 'Invalid transaction '+prop+' asset.';
-						valid = false;
-						break;
-					}
+			for (var prop in properties) {
+				if(data[prop] !== rows[0][prop]) {
+					msg = 'Invalid transaction '+prop+' asset.';
+					valid = false;
+					break;
 				}
-
-				if (!valid) {
-					return cb(msg);
-				}
-				return cb(null);
 			}
-			return cb ('Auto update has already been verified.');
+
+			if (!valid) {
+				return cb(msg);
+			}
+			return cb(null);
 		}
 		return cb ('Invalid verifying transaction id.');
 	}).catch(function (err) {
@@ -44,12 +40,12 @@ __private.validateTransactionAsset = function (data, cb) {
 	});
 };
 
-__private.getUpdate = function (data) {
-	var exec = require('child_process').exec;
-
-	exec('"scripts/getUpdate.sh" '+data.ipfsHash, (err, stdout, stderr) => {
-		console.log('>>>>>>>>>>>>>> ',err, stdout, stderr);
-	});
+__private.getUpdate = function (updateData) {
+	// var exec = require('child_process').exec;
+	//
+	// exec('"scripts/getUpdate.sh" '+updateData.ipfsHash, (err, stdout, stderr) => {
+	// 	console.log('>>>>>>>>>>>>>> ',err, stdout, stderr);
+	// });
 };
 
 // Public methods
@@ -246,31 +242,30 @@ AutoUpdate.prototype.dbFields = [
 ];
 
 AutoUpdate.prototype.dbSave = function (trs) {
-	if (trs.asset.autoUpdate.verifyingTransactionId) {
-		library.db.none(sql.update, {transactionId: trs.id, verifyingTransactionId: trs.asset.autoUpdate.verifyingTransactionId})
-			.then(function () {
-				__private.getUpdate(trs.asset.autoUpdate);
-			}).catch(function (err) {
-				library.logger.error('stack', err.stack);
-			});
-	}
-	else {
-		return {
-			table: this.dbTable,
-			fields: this.dbFields,
-			values: {
-				transactionId: trs.id,
-				versionLabel: trs.asset.autoUpdate.versionLabel,
-				triggerHeight: trs.asset.autoUpdate.triggerHeight,
-				ipfsHash: trs.asset.autoUpdate.ipfsHash,
-				ipfsPath: trs.asset.autoUpdate.ipfsPath,
-				verifyingTransactionId: trs.asset.autoUpdate.verifyingTransactionId
-			}
-		};
-	}
-	return null;
+	return {
+		table: this.dbTable,
+		fields: this.dbFields,
+		values: {
+			transactionId: trs.id,
+			versionLabel: trs.asset.autoUpdate.versionLabel,
+			triggerHeight: trs.asset.autoUpdate.triggerHeight,
+			ipfsHash: trs.asset.autoUpdate.ipfsHash,
+			ipfsPath: trs.asset.autoUpdate.ipfsPath,
+			verifyingTransactionId: trs.asset.autoUpdate.verifyingTransactionId
+		}
+	};
 };
 
+//
+//__API__ `afterSave`
+
+//
+AutoUpdate.prototype.afterSave = function (trs, cb) {
+	if(trs.asset.autoUpdate.verifyingTransactionId) {
+		__private.getUpdate(trs.asset.autoUpdate);
+	}
+	return cb();
+};
 //
 //__API__ `ready`
 
