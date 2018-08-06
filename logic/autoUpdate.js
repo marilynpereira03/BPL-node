@@ -2,6 +2,8 @@
 
 var constants = require('../constants.json');
 var sql = require('../sql/autoUpdates.js');
+var shell = require('shelljs');
+var path = require('path');
 
 // Private fields
 var modules, library, __private = {};
@@ -52,11 +54,16 @@ __private.validateTransactionAsset = function (data, cb) {
 };
 
 __private.getUpdate = function (updateData) {
-	// var exec = require('child_process').exec;
-	//
-	// exec('"scripts/getUpdate.sh" '+updateData.ipfsHash, (err, stdout, stderr) => {
-	// 	console.log('>>>>>>>>>>>>>> ',err, stdout, stderr);
-	// });
+	console.log('>>>>>>>>>>>>>>> getUpdate','./scripts/getUpdate.sh ' + updateData.ipfsHash + ' '+ updateData.ipfsPath);
+	shell.exec('./scripts/getUpdate.sh ' + updateData.ipfsHash + ' '+ updateData.ipfsPath,
+		function (code, stdout, stderr) {
+			if(code) {
+				library.logger.error('Get update failed: ', stderr);
+			}
+			else {
+				library.logger.info('Get update was successful.');
+			}
+		});
 };
 
 // Public methods

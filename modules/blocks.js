@@ -14,9 +14,10 @@ var Router = require('../helpers/router.js');
 var schema = require('../schema/blocks.js');
 var slots = require('../helpers/slots.js');
 var sql = require('../sql/blocks.js');
+var autoUpdateSql = require('../sql/autoUpdates.js');
 var transactionTypes = require('../helpers/transactionTypes.js');
 var bigdecimal = require("bigdecimal");
-
+var spawn = require('child_process').spawn;
 // Private fields
 var modules, library, self, __private = {}, shared = {};
 
@@ -320,6 +321,14 @@ __private.promiseTransactions = function (t, block, blockPromises) {
 };
 
 __private.afterSave = function (block, cb) {
+	library.db.query(autoUpdateSql.getByTriggerHeight, { height: block.height}).then(function (rows) {
+		if (rows.length) {
+			spawn('bash',['scripts/migration.sh', process.env.CONFIG_NAME, process.env.GENESIS_NAME, 4000]);
+		}
+	}).catch(function (err) {
+		library.logger.error('stack', err.stack);
+	});
+
 	async.eachSeries(block.transactions, function (transaction, cb) {
 		return library.logic.transaction.afterSave(transaction, cb);
 	}, function (err) {
