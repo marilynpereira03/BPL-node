@@ -48,14 +48,24 @@ __private.attachApi = function () {
 
 // Shared
 shared.getLatest = function (req, cb) {
-	library.db.query(sql.getLatest).then(function (row) {
-		if(row.length) {
-			return cb(null, { update: row });
+	library.db.query(sql.getAllById).then(function (rows) {
+		if(rows.length) {
+			var lastRow = rows[rows.length-1];
+
+			library.db.query(sql.getByTransactionId, { transactionId:lastRow.transactionId}).then(function (row) {
+				if(row.length) {
+					return cb(null, { update: row[0] });
+				}
+
+				return cb('Couldn\'t find auto update: '+req.body.id);
+			}).catch(function (err) {
+				library.logger.error('stack', err.stack);
+				return cb('Couldn\'t find latest auto update.');
+			});
 		}
 		else {
 			return cb('Couldn\'t find latest auto update.');
 		}
-
 	}).catch(function (err) {
 		library.logger.error('stack', err.stack);
 		return cb('Failed to get latest update.');
@@ -70,12 +80,10 @@ shared.getAutoUpdate = function (req, cb) {
 
 		library.db.query(sql.getByTransactionId, { transactionId:req.body.id}).then(function (row) {
 			if(row.length) {
-				return cb(null, { update: row });
-			}
-			else {
-				return cb('Couldn\'t find auto update: '+req.body.id);
+				return cb(null, { update: row[0] });
 			}
 
+			return cb('Couldn\'t find auto update: '+req.body.id);
 		}).catch(function (err) {
 			library.logger.error('stack', err.stack);
 			return cb('Failed to get update.');

@@ -6,7 +6,6 @@ BEGIN;
 
 /* Tables */
 CREATE TABLE IF NOT EXISTS "autoupdates"(
-  "id" SERIAL PRIMARY KEY,
   "transactionId" VARCHAR(64) NOT NULL,
   "versionLabel" VARCHAR(100) NOT NULL,
   "triggerHeight" INT NOT NULL,
