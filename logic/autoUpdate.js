@@ -54,7 +54,6 @@ __private.validateTransactionAsset = function (data, cb) {
 };
 
 __private.getUpdate = function (updateData) {
-	console.log('>>>>>>>>>>>>>>> getUpdate','./scripts/getUpdate.sh ' + updateData.ipfsHash + ' '+ updateData.ipfsPath);
 	shell.exec('./scripts/getUpdate.sh ' + updateData.ipfsHash + ' '+ updateData.ipfsPath,
 		function (code, stdout, stderr) {
 			if(code) {

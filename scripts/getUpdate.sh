@@ -1,9 +1,5 @@
 #!/bin/bash
 
-#################################
-#  Pre-requisite : curl , unzip #
-#################################
-
 # CONSTANTS DECLARATION
 
 #Generates colours using tput
@@ -42,14 +38,14 @@ if [ $1 ]
 
     # if directoreis are present then call function secondCondition
 
-    if [ -d ./../../Blue -a -d ./../../Green -o -d ./../../../Blue -a -d ./../../../Green ]
+    if [ -d ./../Blue -a -d ./../Green -o -d ./../../Blue -a -d ./../../Green ]
     then
         echo -e "${BLUE}[INFO]:Blue and Green directories are Present ${RESET}"
         secondCondition
     else
         echo -e "${BLUE}[INFO]:Creating Directory Blue and Green....${RESET}"
-        mkdir -p ./../../Green
-        mkdir -p ./../../Blue
+        mkdir -p ./../Green
+        mkdir -p ./../Blue
         echo -e "${GREEN}[INFO]:Blue and Green Directory created ${RESET}"
      echo $PWD
         firstCondition
@@ -68,15 +64,13 @@ fi
 function firstCondition()
 {
 #This will go to the Blue directory and will download the latest code there
-
-cd ./../../Blue
-
+local currentDir=$PWD
+cd ./../Blue
 downloadBPLNode
 
 if [ -d ./../Green ]
  then
     cd ./../Green
-
     #now we are in Green directory
     # if BPL-node directory already present in GREEN directory then remove it
     if [ -d BPL-node ]
@@ -91,11 +85,11 @@ if [ -d ./../Green ]
     echo "${GREEN} [INFO]:BPL-node copied to " $PWD "Directory. ${RESET}"
 
     #after copying the BPL-node directory to GREEN dir, remove the old BPL-node dir.
-    echo "${BLUE} [INFO]:Removing Old BPL-node Directory. ${RESET}"
-    rm -rf ./../BPL-node
-    echo "${GREEN} [INFO]:Removed Old BPL-node directory. ${RESET}"
+    #echo "${BLUE} [INFO]:Removing Old BPL-node Directory. ${RESET}"
+    #rm -rf ./../BPL-node
+    #echo "${GREEN} [INFO]:Removed Old BPL-node directory. ${RESET}"
 
-
+    cd $currentDir
 fi
 
 }
@@ -161,7 +155,7 @@ fi
 function secondCondition()
 {
 
-CURRENT_DIR=$PWD
+#local currentDir=$PWD
 #cd ./../
 echo $PWD
 if [[ $PWD =~ 'Green' ]]
@@ -169,24 +163,24 @@ if [[ $PWD =~ 'Green' ]]
    echo "We are in Green Folder"
    local greenNodePath=$PWD
     echo $PWD
-    if [ -d ./../../../Blue ]
+    if [ -d ./../../Blue ]
      then
          echo "PRESENT"
-         if [ -d ./../../../Blue/BPL-node ]
+         if [ -d ./../../Blue/BPL-node ]
           then
           echo "${BLUE}[INFO]:Removing BPL-node from Blue Directory ${RESET}"
-            rm -rf ./../../../Blue/BPL-node
+          rm -rf ./../../Blue/BPL-node
           echo "${GREEN}[INFO]:Removed BPL-node from Blue Directory ${RESET}"
          else
           echo "BPL-node not present in Blue Dir"
         fi
 
-         cd ./../../../Blue/
-          echo "${BLUE}[INFO]:Downloading BPL-node from IPFS to Blue Directory ${RESET}"
+         cd ./../../Blue/
+        echo "${BLUE}[INFO]:Downloading BPL-node from IPFS to Blue Directory ${RESET}"
              downloadBPLNode
           echo "${GREEN}[INFO]:Downloaded BPL-node from IPFS to Blue Directory ${RESET}"
-           installBPLNode
-           echo $PWD
+          installBPLNode
+         echo $PWD
 
     fi
     cd $greenNodePath
@@ -194,24 +188,25 @@ if [[ $PWD =~ 'Green' ]]
 
 fi
 
+
 if [[ $PWD =~ 'Blue' ]]
  then
    echo "We are in Blue Folder"
    local blueNodePath=$PWD
     echo $PWD
-    if [ -d ./../../../Green ]
+    if [ -d ./../../Green ]
      then
          echo "PRESENT"
-         if [ -d ./../../../Green/BPL-node ]
+         if [ -d ./../../Green/BPL-node ]
           then
           echo "${BLUE}[INFO]:Removing BPL-node from Green Directory ${RESET}"
-            rm -rf ./../../../Green/BPL-node
+            rm -rf ./../../Green/BPL-node
           echo "${GREEN}[INFO]:Removed BPL-node from Green Directory ${RESET}"
          else
           echo "BPL-node not present in Green Dir"
         fi
 
-         cd ./../../../Green/
+         cd ./../../Green/
           echo "${BLUE}[INFO]:Downloading BPL-node from IPFS to Green Directory ${RESET}"
              downloadBPLNode
           echo "${GREEN}[INFO]:Downloaded BPL-node from IPFS to Green Directory ${RESET}"
