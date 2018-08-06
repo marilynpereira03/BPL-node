@@ -13,23 +13,34 @@ __private.validateTransactionAsset = function (data, cb) {
 	library.db.query(sql.getByTransactionId, { transactionId: data.verifyingTransactionId}).then(function (rows) {
 		if (rows.length) {
 			var valid = true, msg = '';
-			var properties = {
-				versionLabel: data.versionLabel,
-				triggerHeight: data.triggerHeight,
-				ipfsHash: data.ipfsHash,
-				ipfsPath: data.ipfsPath
-			};
 
-			for (var prop in properties) {
-				if(data[prop] !== rows[0][prop]) {
-					msg = 'Invalid transaction '+prop+' asset.';
+			for (var prop in rows[0]) {
+				switch (prop) {
+				case 'versionLabel': if(data.versionLabel !== rows[0].versionLabel) {
 					valid = false;
-					break;
+					msg = 'Invalid transaction version label asset.';
 				}
-			}
-
-			if (!valid) {
-				return cb(msg);
+					break;
+				case 'triggerHeight': if(data.triggerHeight !== rows[0].triggerHeight) {
+					valid = false;
+					msg = 'Invalid transaction trigger height asset.';
+				}
+					break;
+				case 'ipfsHash': if(data.ipfsHash !== rows[0].ipfsHash) {
+					valid = false;
+					msg = 'Invalid transaction IPFS hash asset.';
+				}
+					break;
+				case 'ipfsPath': if(data.ipfsPath !== rows[0].ipfsPath) {
+					valid = false;
+					msg = 'Invalid transaction IPFS path asset.';
+				}
+					break;
+				default: break;
+				}
+				if (!valid) {
+					return cb(msg);
+				}
 			}
 			return cb(null);
 		}
