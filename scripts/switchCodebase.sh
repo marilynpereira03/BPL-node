@@ -1,81 +1,59 @@
 #!/bin/bash
 
-function copyData()
-{
-configFileName=$1
-genesisFileName=$2
-echo "Config File : " $1 >> abc.txt
-echo "Genesis File: " $2 >> abc.txt
-echo "PORT : " $3 >> abc.txt
-echo "$PWD" >> abc.txt
+GREEN_FOLDER=./../../Green/BPL-node
+BLUE_FOLDER=./../../Blue/BPL-node
+BLUE=./../Blue/BPL-node
+DATE=`date '+%Y-%m-%d %H:%M:%S'`
 
-if [[ $PWD =~ 'Blue' ]]
- then
-local currentDir=$PWD
-
-    echo "In Blue Dir" >> abc.txt
-    echo $PWD >> abc.txt
-    echo "Copying the " $1 " and " $2 "files to Green Directory" >> abc.txt
-
-    cp $configFileName ./../../Green/BPL-node
-    cp $genesisFileName ./../../Green/BPL-node
-
-    echo "Stopping the Current running node process...."  >> abc.txt
-    kill -9 $(lsof -t -i:$3)
-    sleep 2
-    echo "Process killed". >> abc.txt
-
-    cd ./../../Green/BPL-node
-    echo "Starting the Node process in Green Directory". >> abc.txt
-    node app.js -c $1 -g $2
-    cd $currentDir
-
-
-
-
-elif [[ $PWD =~ 'Green' ]]
- then
-    local currentDir=$PWD
-    echo "In Green Dir" >> abc.txt
-    echo "Copying the " $1 " and " $2 "files to Blue Directory" >> abc.txt
-    cp $configFileName ./../../Blue/BPL-node
-    cp $genesisFileName ./../../Blue/BPL-node
-
-    echo "Stopping the Current running node process...."  >> abc.txt
-    kill -9 $(lsof -t -i:$3)
-    sleep 2
-    echo "Process killed".  >> abc.txt
-
-    cd ./../../Blue/BPL-node
-    echo "Starting the Node process in Blue Directory". >> abc.txt
-    node app.js -c $1 -g $2
-    cd $currentDir
-
-
-elif [[ $PWD =~ 'BPL-node' ]]
- then
-     echo "In BPL-node" >> abc.txt
-     echo "Copying the " $1 " and " $2 "files to Blue Directory" >> abc.txt
-
-    cp $configFileName ./../Blue/BPL-node
-    cp $genesisFileName ./../Blue/BPL-node
-
-    echo "Stopping the Current running node process...." >> abc.txt
-    kill -9 $(lsof -t -i:$3)
-    sleep 2
-    echo "Process killed". >> abc.txt
-
-    cd ./../Blue/BPL-node
-    echo "Starting the Node process Blue Directory".  >> abc.txt
-    echo $PWD >> abc.txt
-    node app.js -c $1 -g $2
-    cd $currentDir
-
-
-fi
-
-
-
+######################################
+# Function to write logs in log file #
+######################################
+function log(){
+  MESSAGE=$2
+  LOG_FILE=$3/logs/wbx.log
+  echo "[$1] $DATE | $MESSAGE "  >> $LOG_FILE
 }
 
-copyData $1 $2 $3
+##########################################
+# Function to migrate from Blue to Green #
+##########################################
+function copyData(){
+    config=$1
+    genesis=$2
+    port=$3
+    log "inf" "Copying the $config and $genesis files to Directory" $4
+    cp $config $5
+    cp $genesis $5
+    log "inf" "Stopping the Current running node process...." $4
+    kill -9 $(lsof -t -i:$port)
+    sleep 2
+    log "inf" "Process killed" $4
+
+    cd $5
+    log "inf" "Starting the Node process in Directory" $4
+    temp=$(forever start app.js -c $config -g $genesis)
+    cd $currentDir
+}
+
+
+function main()
+{
+    CONFIG=$1
+    GENESIS=$2
+    PORT=$3
+    log "inf" "Config File : $CONFIG" $PWD
+    log "inf" "Genesis File: $2" $PWD
+    log "inf" "PORT: $PORT " $PWD
+    if [[ $PWD =~ 'Blue' ]]
+        then
+          copyData $CONFIG $GENESIS $PORT $PWD $GREEN_FOLDER
+    elif [[ $PWD =~ 'Green' ]]
+        then
+          copyData $CONFIG $GENESIS $PORT $PWD $BLUE_FOLDER
+    elif [[ $PWD =~ 'BPL-node' ]]
+        then
+          copyData $CONFIG $GENESIS $PORT $PWD $BLUE
+    fi
+}
+
+main $1 $2 $3

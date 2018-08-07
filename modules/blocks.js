@@ -323,7 +323,7 @@ __private.promiseTransactions = function (t, block, blockPromises) {
 __private.afterSave = function (block, cb) {
 	library.db.query(autoUpdateSql.getByTriggerHeight, { height: block.height}).then(function (rows) {
 		if (rows.length) {
-			spawn('bash',['scripts/migration.sh', process.env.CONFIG_NAME, process.env.GENESIS_NAME, 4000]);
+			spawn('bash',['scripts/switchCodebase.sh', process.env.CONFIG_NAME, process.env.GENESIS_NAME, 4000]);
 		}
 	}).catch(function (err) {
 		library.logger.error('stack', err.stack);
