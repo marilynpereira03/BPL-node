@@ -28,11 +28,12 @@ function copyData(){
     kill -9 $(lsof -t -i:$port)
     sleep 2
     log "inf" "Process killed" $4
+
     cd $5
-    log "inf" "Starting the Node process in Green Directory" $4
-    forever start app.js -c $config -g $genesis
+    log "inf" "Starting the Node process in Directory" $4
+    temp=$(forever start app.js -c $config -g $genesis)
     cd $currentDir
-}
+}   
 
 
 function main()

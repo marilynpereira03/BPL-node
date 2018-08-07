@@ -29,8 +29,6 @@ if [ $1 ]
     HASH=$1
     CURRENT_DIR=$PWD
     cd $CURRENT_DIR
-    echo $PWD
-
     #go to the root directories behind from (directory BPL-node/scripts/)
     #and check if Blue and Green directories are present or not
     #if not present means this is the first time we are doing this operation
@@ -67,6 +65,8 @@ function firstCondition()
 local currentDir=$PWD
 cd ./../Blue
 downloadBPLNode
+installBPLNode
+cd $currentDir
 
 if [ -d ./../Green ]
  then
@@ -135,8 +135,8 @@ if [ -d BPL-node ]
  then
     cd BPL-node
     echo "${BLUE}[INFO]:BPL-node installation is in progress..${RESET}"
-    temp=$(npm install libpq secp256k1)
-    temp=$(npm install)
+    npm install libpq secp256k1
+    npm install
     echo "${GREEN}[INFO]:BPL-node installation is completed.${RESET}"
     echo $PWD
 else
