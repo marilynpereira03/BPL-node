@@ -1,8 +1,8 @@
 "use strict";
 
 module.exports = {
-	getByAddress: {
-		id: "polls.getByAddress",
+	getPollResults: {
+		id: "polls.getPollResults",
 		type: "object",
 		properties: {
 			address: {

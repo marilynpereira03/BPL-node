@@ -37,7 +37,7 @@ __private.attachApi = function () {
 	});
 
 	router.map(shared, {
-		"get /getByAddress": "getByAddress",
+		"get /getPollResults": "getPollResults",
 		"get /": "getPolls",
 		"get /get": "getPoll"
 	});
@@ -140,8 +140,8 @@ Polls.prototype.isDuplicateAddress = function (address,cb) {
 };
 
 // Shared
-shared.getByAddress = function (req, cb) {
-	library.schema.validate(req.body, schema.getByAddress, function (err) {
+shared.getPollResults = function (req, cb) {
+	library.schema.validate(req.body, schema.getPollResults, function (err) {
 		if (err) {
 			return cb(err[0].message);
 		}
