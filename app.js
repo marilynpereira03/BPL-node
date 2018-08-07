@@ -83,6 +83,16 @@ if (program.interactive) {
 	appConfig.consoleLogLevel = "none";
 }
 
+if (program.config) {
+	appConfig = require(path.resolve(process.cwd(), program.config));
+	process.env.CONFIG_NAME = program.config;
+}
+
+if (program.genesis) {
+	genesisblock = require(path.resolve(process.cwd(), program.genesis));
+	process.env.GENESIS_NAME = program.genesis;
+}
+
 var config = {
 	db: appConfig.db,
 	modules: {
