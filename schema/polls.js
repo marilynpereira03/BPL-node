@@ -21,8 +21,7 @@ module.exports = {
 				type: "string",
 				minLength: 1,
 			}
-		},
-		required: ["name"]
+		}
 	},
 	getPolls: {
 		id: "polls.getPolls",

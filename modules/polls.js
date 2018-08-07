@@ -62,36 +62,50 @@ __private.getAllPolls = function (cb) {
 		if (!rows.length) {
 			return cb("Polls not found");
 		}
-		rows =__private.normalize(rows);
-		return cb(null, {polls:rows});
+		rows = __private.normalize(rows);
+		return cb(null, { polls: rows });
 	}).catch(function (err) {
 		library.logger.error("stack", err);
-		return cb("Polls#getAllPolls error"+err);
+		return cb("Polls#getAllPolls error" + err);
 	});
 };
 
 __private.getPoll = function (name, cb) {
-	library.db.query(sql.getPoll,{name: name}).then(function (rows) {
+	library.db.query(sql.getPoll, { name: name }).then(function (rows) {
 		var count = rows.length ? rows[0].count : 0;
 		if (!rows.length) {
 			return cb("Poll not found: " + name);
 		}
-		rows =__private.normalize(rows);
-		return cb(null, {polls:rows});
+		rows = __private.normalize(rows);
+		return cb(null, { polls: rows });
 	}).catch(function (err) {
 		library.logger.error("stack", err);
-		return cb("Polls#getPoll error"+err);
+		return cb("Polls#getPoll error" + err);
 	});
 };
 
-__private.getDate = function(timestamp) {
-	var epochTimestamp = new Date(epochTime).getTime() / 1000;
-	timestamp+=epochTimestamp;
-	return (new Date(timestamp*1000));
+__private.getPollByAddress = function (address, cb) {
+	library.db.query(sql.getPollByAddress, { address: address }).then(function (rows) {
+		var count = rows.length ? rows[0].count : 0;
+		if (!rows.length) {
+			return cb("Poll not found: " + address);
+		}
+		rows = __private.normalize(rows);
+		return cb(null,{ poll:rows });
+	}).catch(function (err) {
+		library.logger.error("stack", err);
+		return cb("Polls#getPoll error" + err);
+	});
 };
 
-__private.normalize = function(rows){
-	for(var i=0;i<rows.length;i++){
+__private.getDate = function (timestamp) {
+	var epochTimestamp = new Date(epochTime).getTime() / 1000;
+	timestamp += epochTimestamp;
+	return (new Date(timestamp * 1000));
+};
+
+__private.normalize = function (rows) {
+	for (var i = 0; i < rows.length; i++) {
 		rows[i].startdate = __private.getDate(rows[i].startdate);
 		rows[i].enddate = __private.getDate(rows[i].enddate);
 	}
@@ -126,8 +140,8 @@ Polls.prototype.onAttachPublicApi = function () {
 Polls.prototype.onPeersReady = function () {
 };
 
-Polls.prototype.isDuplicateAddress = function (address,cb) {
-	library.db.query(sql.countByAddress, {address: address}).then(function (rows) {
+Polls.prototype.isDuplicateAddress = function (address, cb) {
+	library.db.query(sql.countByAddress, { address: address }).then(function (rows) {
 		if (parseInt(rows[0].count)) {
 			return cb(true);
 		}
@@ -146,9 +160,9 @@ shared.getPollResults = function (req, cb) {
 			return cb(err[0].message);
 		}
 
-		library.db.query(sql.getPollResultByAddress, {address: req.body.address}).then(function (rows) {
+		library.db.query(sql.getPollResultByAddress, { address: req.body.address }).then(function (rows) {
 			if (!rows.length) {
-				return cb("No vote transactions for poll address: " +req.body.address);
+				return cb("No vote transactions for poll address: " + req.body.address);
 			}
 			return cb(null, { polls: rows });
 		}).catch(function (err) {
@@ -163,12 +177,12 @@ shared.getPolls = function (req, cb) {
 		if (err) {
 			return cb(err[0].message);
 		}
-		__private.getAllPolls(function(err,res){
-			if(err) {
+		__private.getAllPolls(function (err, res) {
+			if (err) {
 				cb(err);
 			}
 			else {
-				cb(null,res);
+				cb(null, res);
 			}
 		});
 	});
@@ -179,14 +193,29 @@ shared.getPoll = function (req, cb) {
 		if (err) {
 			return cb(err[0].message);
 		}
-		__private.getPoll(req.body.name,function(err,res){
-			if(err) {
-				cb(err);
-			}
-			else {
-				cb(null,res);
-			}
-		});
+		if (req.body.name) {
+			__private.getPoll(req.body.name, function (err, res) {
+				if (err) {
+					cb(err);
+				}
+				else {
+					cb(null, res);
+				}
+			});
+		}
+		else if (req.body.address) {
+			__private.getPollByAddress(req.body.address, function (err, res) {
+				if (err) {
+					cb(err);
+				}
+				else {
+					cb(null, res);
+				}
+			});
+		}
+		else {
+			return cb("Missing required property name or address");
+		}
 	});
 };
 // Export
