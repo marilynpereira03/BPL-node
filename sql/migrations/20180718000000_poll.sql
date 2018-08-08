@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS "polls"(
 
 COMMIT;
 
+
 /* Alter transactions table */
 DO $$
     BEGIN
@@ -19,6 +20,9 @@ DO $$
             ALTER TABLE transactions ADD COLUMN payload VARCHAR(50) default NULL;
         EXCEPTION
             WHEN duplicate_column THEN RAISE NOTICE 'column payload already exists in transactions, skipping';
+            CREATE INDEX IF NOT EXISTS "transaction_payload" ON "transactions"("payload");
+        END;
+        BEGIN
         END;
     END;
 $$
