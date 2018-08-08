@@ -62,7 +62,6 @@ __private.getAllPolls = function (cb) {
 		if (!rows.length) {
 			return cb("Polls not found");
 		}
-		rows = __private.normalize(rows);
 		return cb(null, { polls: rows });
 	}).catch(function (err) {
 		library.logger.error("stack", err);
@@ -76,7 +75,6 @@ __private.getPoll = function (name, cb) {
 		if (!rows.length) {
 			return cb("Poll not found: " + name);
 		}
-		rows = __private.normalize(rows);
 		return cb(null, { polls: rows });
 	}).catch(function (err) {
 		library.logger.error("stack", err);
@@ -90,27 +88,14 @@ __private.getPollByAddress = function (address, cb) {
 		if (!rows.length) {
 			return cb("Poll not found: " + address);
 		}
-		rows = __private.normalize(rows);
-		return cb(null,{ poll:rows });
+		return cb(null,{ poll:rows[0] });
 	}).catch(function (err) {
 		library.logger.error("stack", err);
 		return cb("Polls#getPoll error" + err);
 	});
 };
 
-__private.getDate = function (timestamp) {
-	var epochTimestamp = new Date(epochTime).getTime() / 1000;
-	timestamp += epochTimestamp;
-	return (new Date(timestamp * 1000));
-};
 
-__private.normalize = function (rows) {
-	for (var i = 0; i < rows.length; i++) {
-		rows[i].startdate = __private.getDate(rows[i].startdate);
-		rows[i].enddate = __private.getDate(rows[i].enddate);
-	}
-	return rows;
-};
 // Events
 //
 //__EVENT__ `onBind`
@@ -164,7 +149,7 @@ shared.getPollResults = function (req, cb) {
 			if (!rows.length) {
 				return cb("No vote transactions for poll address: " + req.body.address);
 			}
-			return cb(null, { polls: rows });
+			return cb(null, { result: rows });
 		}).catch(function (err) {
 			library.logger.error("stack", err);
 			return cb("Polls#getContract error");
