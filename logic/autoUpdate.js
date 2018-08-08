@@ -1,9 +1,9 @@
 'use strict';
 
+var async = require('async');
 var constants = require('../constants.json');
 var sql = require('../sql/autoUpdates.js');
 var shell = require('shelljs');
-var path = require('path');
 
 // Private fields
 var modules, library, __private = {};
@@ -11,6 +11,7 @@ var modules, library, __private = {};
 // Constructor
 function AutoUpdate () {}
 
+//Private methods
 __private.validateTransactionAsset = function (data, cb) {
 	library.db.query(sql.getByTransactionId, { transactionId: data.verifyingTransactionId}).then(function (rows) {
 		if (rows.length) {
@@ -50,6 +51,30 @@ __private.validateTransactionAsset = function (data, cb) {
 	}).catch(function (err) {
 		library.logger.error('stack', err.stack);
 		return cb('Failed to get verifying transaction.');
+	});
+};
+
+__private.getDuplicate = function (data, cb) {
+	var query = '';
+
+	if (data.verifyingTransactionId) {
+		query = sql.getDuplicateWithNotNullVerifyingTxId;
+	}
+	else {
+		query = sql.getDuplicateWithNullVerifyingTxId;
+	}
+
+	library.db.query(query, { versionLabel: data.versionLabel,
+		triggerHeight: data.triggerHeight, ipfsHash: data.ipfsHash, ipfsPath: data.ipfsPath,
+		verifyingTransactionId: data.verifyingTransactionId}).then(function (rows) {
+		if(rows.length) {
+			return cb(rows[0].transactionId);
+		}
+
+		return cb(null);
+	}).catch(function (err) {
+		library.logger.error('stack', err.stack);
+		return cb('Failed to get duplicate autoupdate transaction.');
 	});
 };
 
@@ -125,17 +150,40 @@ AutoUpdate.prototype.verify = function (trs, sender, cb) {
 	if (trs.asset.autoUpdate.verifyingTransactionId === undefined) {
 		return cb('Invalid verifying transaction id asset.');
 	}
-	else if (trs.asset.autoUpdate.verifyingTransactionId) {
-		__private.validateTransactionAsset(trs.asset.autoUpdate, function (err) {
-			if (err) {
-				return cb(err);
+	async.parallel([
+		function(callback) {
+			__private.getDuplicate(trs.asset.autoUpdate, function(res) {
+				if (res) {
+					callback('Duplicate autoupdate transaction.');
+				}
+				else {
+					callback(null);
+				}
+			});
+		},
+		function(callback) {
+			if (trs.asset.autoUpdate.verifyingTransactionId) {
+				__private.validateTransactionAsset(trs.asset.autoUpdate, function (err) {
+					if (err) {
+						callback(err);
+					}
+					else {
+						callback(null);
+					}
+				});
 			}
+			else {
+				callback(null);
+			}
+		}
+	], function(err) {
+		if(err) {
+			return cb(err);
+		}
+		else {
 			return cb(null, trs);
-		});
-	}
-	else {
-		return cb(null, trs);
-	}
+		}
+	});
 };
 
 //
@@ -279,7 +327,7 @@ AutoUpdate.prototype.dbSave = function (trs) {
 //
 AutoUpdate.prototype.afterSave = function (trs, cb) {
 	if(trs.asset.autoUpdate.verifyingTransactionId) {
-		__private.getUpdate(trs.asset.autoUpdate);
+		//__private.getUpdate(trs.asset.autoUpdate);
 	}
 	return cb();
 };
