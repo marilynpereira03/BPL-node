@@ -68,6 +68,10 @@ Poll.prototype.verify = function (trs, sender, cb) {
 		return cb("Invalid poll intentions. Must be an array.");
 	}
 
+	if (trs.asset.poll.description === undefined) {
+		trs.asset.poll.description = null;
+	}
+
 	if(trs.asset.poll.intentions.length<2){
 		return cb("Minimum 2 intentions are required.");
 	}
@@ -203,6 +207,7 @@ Poll.prototype.dbFields = [
 	"endTimestamp",
 	"address",
 	"intentions",
+	"description",
 	"transactionId"
 ];
 //
@@ -219,6 +224,7 @@ Poll.prototype.dbSave = function (trs) {
 			endTimestamp: trs.asset.poll.endTimestamp,
 			address: trs.asset.poll.address,
 			intentions: trs.asset.poll.intentions,
+			description: trs.asset.poll.description,
 			transactionId: trs.id
 		}
 	};

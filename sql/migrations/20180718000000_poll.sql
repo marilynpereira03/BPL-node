@@ -6,7 +6,8 @@ CREATE TABLE IF NOT EXISTS "polls"(
   "startTimestamp" INT NOT NULL,
   "endTimestamp" INT NOT NULL,
   "intentions" TEXT[] NOT NULL,
-  "transactionId" VARCHAR(64) NOT NULL,
+  "description" VARCHAR(100) NOT NULL,
+  "transactionId" VARCHAR(64) default NULL,
   FOREIGN KEY("transactionId") REFERENCES transactions(id) ON DELETE CASCADE
 );
 
