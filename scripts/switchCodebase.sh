@@ -2,7 +2,7 @@
 
 GREEN_FOLDER=./../../Green/BPL-node
 BLUE_FOLDER=./../../Blue/BPL-node
-BLUE=./../Blue/BPL-node
+BLUE=./../BPLNode/Blue/BPL-node
 DATE=`date '+%Y-%m-%d %H:%M:%S'`
 
 ######################################

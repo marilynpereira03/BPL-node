@@ -1,223 +1,314 @@
 #!/bin/bash
 
-# CONSTANTS DECLARATION
-
-#Generates colours using tput
-RED=`tput setaf 1`
-GREEN=`tput setaf 2`
-YELLOW=`tput setaf 3`
-BLUE=`tput setaf 4`
-RESET=`tput sgr0`
-
-#fileName will be name of the downloaded file
-FILE_NAME="BPL-node.zip"
-#IPFS link
+FILE_NAME="BPL-node"
+FILE_EXTENSION=".tar.gz"
 IPFS_LINK="https://ipfs.io/ipfs/"
+IPFS_HASH=""
 
-##########################################################################################################################################
+BLUE="Blue"
+GREEN="Green"
+BPL_NODE='BPLNode'
+BPL_NODE_PATH="./../$BPL_NODE"
+BLUE_DIR_PATH="./../../$BLUE"
+GREEN_DIR_PATH="./../../$GREEN"
+DATE=`date '+%Y-%m-%d %H:%M:%S'`
+LOG_FILE=""
 
+# ##################################################################################################
+#   function inti() -: this function will perform the follwing tasks                               #
+#                                                                                                  #
+#  1.will take two arguments : 1.IPFS_LINK & 2. IPFS_HASH                                          #
+#  2.initialize above values to appropriate variables                                              #
+#  3.If function arguments value are null then will thorw the error and stop the execution.        #
+#  4.It will check whether the BPLNode Directory is present on the level of current directory path #
+#    if   : BPLNode directory is present then it will call performCleanup function                 #
+#                                                                                                  #
+#    else : it will create the required directories, and will call the "installSoftware" Function  #
+#                                                                                                  #
+# ##################################################################################################
 
-##########
-# init() #
-##########
-
-function init()
+function init ()
 {
-#get current directory path from which the current script is running.
-if [ $1 ]
- then
-    HASH=$1
-    CURRENT_DIR=$PWD
-    cd $CURRENT_DIR
-    #go to the root directories behind from (directory BPL-node/scripts/)
-    #and check if Blue and Green directories are present or not
-    #if not present means this is the first time we are doing this operation
-    #so create those directories and call the function firstCondition
-
-    # if directoreis are present then call function secondCondition
-
-    if [ -d ./../Blue -a -d ./../Green -o -d ./../../Blue -a -d ./../../Green ]
+    if [ "$1" -a "$2" ]
     then
-        echo -e "${BLUE}[INFO]:Blue and Green directories are Present ${RESET}"
-        secondCondition
+        IPFS_LINK=$1
+        IPFS_HASH=$2
+        installSoftware
     else
-        echo -e "${BLUE}[INFO]:Creating Directory Blue and Green....${RESET}"
-        mkdir -p ./../Green
-        mkdir -p ./../Blue
-        echo -e "${GREEN}[INFO]:Blue and Green Directory created ${RESET}"
-     echo $PWD
-        firstCondition
+        log "ERR" "Invalid number of arguments passed to init()."
+        echo "ERR | Invalid number of arguments passed to init()."
     fi
-
-else
-    echo -e "${RED}[ERR]:Invalid Number of Arguments ${RESET}"
-    echo -e "${BLUE}[INFO]:Hash value not provided to 'downloadBPLNode' function ${RESET}"
-fi
 }
 
-####################
-# firstCondition() #
-####################
+# #################################################################################################
+#   function log() -: this function will perform the follwing tasks                               #
+#                                                                                                 #
+#    This function will print the log in a specified file                                         #
+#    with the format [INF] TIMESTAMP MESSAGE                                                      #                                            #
+#                                                                                                 #
+#                                                                                                 #
+#                                                                                                 #
+#                                                                                                 #
+#                                                                                                 #
+#                                                                                                 #
+#                                                                                                 #
+###################################################################################################
 
-function firstCondition()
+function log(){
+
+  #echo -e "[$1] $DATE | $2 "  >> $LOG_FILE
+  echo -e "[$1] $DATE | $2 "
+ }
+
+
+
+###################################################################################################
+#  function downloadNodeSoftware()                                                                #
+#                                                                                                 #
+#  This function will download the latest BPL-node software from IPFS to specified directory      #
+#  This function takes one argument which is the path of the directory to download the software.  #
+#                                                                                                 #
+#                                                                                                 #
+#                                                                                                 #
+#                                                                                                 #
+#                                                                                                 #
+#                                                                                                 #
+###################################################################################################
+  function downloadSoftware()
 {
-#This will go to the Blue directory and will download the latest code there
-local currentDir=$PWD
-cd ./../Blue
-downloadBPLNode
-installBPLNode
-cd $currentDir
 
-if [ -d ./../Green ]
- then
-    cd ./../Green
-    #now we are in Green directory
-    # if BPL-node directory already present in GREEN directory then remove it
+echo "**************************************************** $1"
+local downloadDir=$1
+cd $downloadDir
+echo "DOWNLOAD DIR $downloadDir"
+log "INF" "Downloading BPL-node software from IPFS to directory: $PWD "
+
+echo "HASH $IPFS_LINK$IPFS_HASH : $FILE_NAME$FILE_EXTENSION "
+if curl $IPFS_LINK$IPFS_HASH -o $FILE_NAME$FILE_EXTENSION
+then
+    log "INF" "Successfully downloaded BPL-node software."
+
+fi
+
+}
+
+
+###################################################################################################
+#  function extractSoftwareCode()                                                                 #
+#                                                                                                 #
+#  This function takes one argument which is the path of the directory to download the software.  #
+#  This function will Extract the downloaded BPL-node.tar.gz file                                 #
+#                                                                                                 #
+#                                                                                                 #
+#                                                                                                 #
+#                                                                                                 #
+#                                                                                                 #
+###################################################################################################
+
+
+
+function extractSoftwareCode ()
+{
+  echo "********************************************************** $1"
+    if [ "$1" ]
+    local inputDir=$1
+    cd $inputDir
+    then
+        if [ -e $FILE_NAME$FILE_EXTENSION ]
+        then
+            log "INF" "Extracting $FILE_NAME to directory: $PWD"
+            tar -xvzf $FILE_NAME$FILE_EXTENSION
+            log "INF" "Successfully extracted $FILE_NAME to directory: $PWD"
+            log "INF" "Removing $FILE_NAME from directory: $PWD"
+            rm -rf $FILE_NAME$FILE_EXTENSION
+            log "INF" "Successfully removed $FILE_NAME from directory: $PWD"
+
+        fi
+    fi
+
+}
+
+###################################################################################################
+#  function installDependencies()                                                                  #
+#                                                                                                 #
+#  This function takes one argument which is the path of the directory to the BPL software.       #
+#  This function will install all the required node modules and dependencies                      #
+#                                                                                                 #
+#                                                                                                 #
+#                                                                                                 #
+#                                                                                                 #
+#                                                                                                 #
+###################################################################################################
+
+
+
+function installDependencies()
+{
+
+  echo "********************************************************************** $1"
+if [ "$1" ]
+then
+local inputDir=$1
+cd $inputDir
+# log "INF" "Installaion of BPLNodeSoftware Path : $PWD"
+    #installation process of BPL-node
     if [ -d BPL-node ]
     then
-        rm -rf BPL-node
+        cd BPL-node
+        log "INF" "Installing BPL-node software dependencies to directory: $PWD"
+        npm install libpq secp256k1
+        npm install
+        log "INF" "Successfully installed BPL-node software dependencies."
+    else
+        log "ERR" "Unable to install BPL-node software dependencies to directory: $PWD"
     fi
-
-    #Now copy BPL-node directory here from Initial Condition
-    echo "${BLUE} [INFO]:Copying BPL-node to " $PWD "Directory. ${RESET}"
-    echo $PWD
-    cp -r ./../BPL-node .
-    echo "${GREEN} [INFO]:BPL-node copied to " $PWD "Directory. ${RESET}"
-
-    #after copying the BPL-node directory to GREEN dir, remove the old BPL-node dir.
-    #echo "${BLUE} [INFO]:Removing Old BPL-node Directory. ${RESET}"
-    #rm -rf ./../BPL-node
-    #echo "${GREEN} [INFO]:Removed Old BPL-node directory. ${RESET}"
-
-    cd $currentDir
-fi
-
-}
-
-#####################
-# downloadBPLNode() #
-#####################
-
-function downloadBPLNode()
-{
-echo -e "${BLUE}[INFO]:Downloading BPL-node from IPFS....${RESET}"
-
-#this will download the BPL-node folder from IPFS
-if curl $IPFS_LINK$HASH > $FILE_NAME
-  then
-  echo -e "${GREEN}[INFO]:BPL-node downloaded from IPFS. ${RESET}"
-
-	if [ -e $FILE_NAME ]
- 	  then
-       echo -e "${BLUE}[INFO]:Extracting " $FILE_NAME "to Directory"$PWD"${RESET}"
-       unzip $FILE_NAME -d .
-       echo -e "${GREEN}[INFO]:Extracted " $FILE_NAME "to Directory"$PWD "${RESET}"
-
-       echo -e " ${BLUE}[INFO]:Removing " $FILE_NAME "${RESET}"
-        rm -rf $FILE_NAME
-       echo -e " ${BLUE}[INFO]:"$FILE_NAME" Removed Successfuly ${RESET}"
-
-     fi
-fi
-
-}
-
-#####################
-# installBPLNode() #
-#####################
-
-
-function installBPLNode()
-{
-
-#installation process of BPL-node
-if [ -d BPL-node ]
- then
-    cd BPL-node
-    echo "${BLUE}[INFO]:BPL-node installation is in progress..${RESET}"
-    npm install libpq secp256k1
-    npm install
-    echo "${GREEN}[INFO]:BPL-node installation is completed.${RESET}"
-    echo $PWD
 else
-    echo  "${RED}[ERR]:Unable to install BPL-node ${RESET}"
+    log "ERR" "Invalid number of arguments passed to installDependencies()."
 fi
 }
 
 
-#####################
-# secondCondition() #
-#####################
+###################################################################################################
+#  function backupBPLNode()                                                                       #
+#                                                                                                 #
+#  This function takes two argument                                                               #
+#    1.path of current directory                                                                  #
+#    2. path to backup directory                                                                  #
+#  This function will copy all the files of BPL-node from current directory to backup directory   #
+#                                                                                                 #
+#                                                                                                 #
+#                                                                                                 #
+#                                                                                                 #
+#                                                                                                 #
+###################################################################################################
 
-# This function will only get called when we have Green and Blue directories present in the system,
-# So first this function will check the current working directory,
-#if it is Blue then we will remove the content
-function secondCondition()
+
+function backupBPLNode()
 {
-
-#local currentDir=$PWD
-#cd ./../
-echo $PWD
-if [[ $PWD =~ 'Green' ]]
- then
-   echo "We are in Green Folder"
-   local greenNodePath=$PWD
-    echo $PWD
-    if [ -d ./../../Blue ]
-     then
-         echo "PRESENT"
-         if [ -d ./../../Blue/BPL-node ]
-          then
-          echo "${BLUE}[INFO]:Removing BPL-node from Blue Directory ${RESET}"
-          rm -rf ./../../Blue/BPL-node
-          echo "${GREEN}[INFO]:Removed BPL-node from Blue Directory ${RESET}"
-         else
-          echo "BPL-node not present in Blue Dir"
-        fi
-
-         cd ./../../Blue/
-        echo "${BLUE}[INFO]:Downloading BPL-node from IPFS to Blue Directory ${RESET}"
-             downloadBPLNode
-          echo "${GREEN}[INFO]:Downloaded BPL-node from IPFS to Blue Directory ${RESET}"
-          installBPLNode
-         echo $PWD
-
-    fi
-    cd $greenNodePath
-    echo $PWD " GREEN NODE"
-
+if [ "$1" -a "$2" ]
+then
+    local inputDir=$1
+    local backupDir=$2
+    cd $inputDir
+    log "INF" "Taking backup of BPL-node software from $inputDir to $backupDir "
+    cp -r $inputDir $backupDir
+    log "INF" "Successfully taken backup of BPL-node software."
+else
+    log "ERR" "Unable to take backup of BPL-node software from $1 to $2 "
 fi
 
-
-if [[ $PWD =~ 'Blue' ]]
- then
-   echo "We are in Blue Folder"
-   local blueNodePath=$PWD
-    echo $PWD
-    if [ -d ./../../Green ]
-     then
-         echo "PRESENT"
-         if [ -d ./../../Green/BPL-node ]
-          then
-          echo "${BLUE}[INFO]:Removing BPL-node from Green Directory ${RESET}"
-            rm -rf ./../../Green/BPL-node
-          echo "${GREEN}[INFO]:Removed BPL-node from Green Directory ${RESET}"
-         else
-          echo "BPL-node not present in Green Dir"
-        fi
-
-         cd ./../../Green/
-          echo "${BLUE}[INFO]:Downloading BPL-node from IPFS to Green Directory ${RESET}"
-             downloadBPLNode
-          echo "${GREEN}[INFO]:Downloaded BPL-node from IPFS to Green Directory ${RESET}"
-           installBPLNode
-
-           echo $PWD
-    fi
-    cd $blueNodePath
-    echo $PWD " BLUE NODE"
-
-fi
 
 }
-init $1
+
+###################################################################################################
+# function cleanDirectory()                                                                       #
+#                                                                                                 #
+#    this function take one argument which is the path of the directory                           #
+#    and it removes the downloaded BPL-node software file from IPFS                               #
+#                                                                                                 #
+#                                                                                                 #
+#                                                                                                 #
+#                                                                                                 #
+#                                                                                                 #
+#                                                                                                 #
+###################################################################################################
+
+
+ function cleanDirectory()
+ {
+
+ if [ $1 ]
+ then
+     if [ -d "$1/$FILE_NAME" ]
+     then
+         rm -rf "$1/$FILE_NAME"
+         log "INF" "Successfully deleted file $FILE_NAME from $1"
+     else
+         log "ERR" "Unable to delete file $FILE_NAME from $1"
+     fi
+ else
+     log "ERR" "Invalid number of arguments to function cleanDirectory()."
+ fi
+
+ }
+
+
+###################################################################################################
+# function installSoftware()                                                                      #
+#    This function takes two arguments                                                            #
+#    1. path of current directory                                                                 #
+#    2. path of the directory to install the BPL-node software                                    #
+#                                                                                                 #
+#   * This will download the BPL-node software from IPFS to given directory                       #
+#   * Extract the BPL-node.tar.gz file                                                            #
+#   * Install all the dependencies and npm modeules                                               #
+#                                                                                                 #
+#   * and only in the inital condition it will take a backup of BPL-node software code to         #
+#        $GREEN directory                                                                         #
+###################################################################################################
+
+
+
+function installSoftware()
+{
+    local pwd=""
+    local nextDir=""
+
+    if [  \( -d "./../$BPL_NODE" \)  -o \( -d "./../../../$BPL_NODE"  \) ]
+    then
+            local pwd=$PWD
+            cd ./../../
+            createLogFile
+            cd $pwd
+            log  "INF" "$BLUE & $GREEN directories are present."
+
+            if [[ "$PWD" =~ "$GREEN" ]]
+            then
+                pwd=$PWD
+                nextDir=$BLUE_DIR_PATH
+                log "INF" "We are in $GREEN directory $PWD"
+
+            elif [[ "$PWD" =~ "$BLUE" ]]
+            then
+                pwd=$PWD
+                nextDir=$GREEN_DIR_PATH
+                log "INF" "We are in $BLUE directory $PWD"
+            fi
+    else
+        local pwd=$PWD
+        mkdir -p "$BPL_NODE_PATH"
+        createLogFile
+        cd $pwd
+        log "INF" "Creating $BLUE and $GREEN directories."
+        mkdir -p "$BPL_NODE_PATH/$BLUE"
+        mkdir -p "$BPL_NODE_PATH/$GREEN"
+        log "INF" "Successfully created $BLUE and $GREEN directories."
+        nextDir="$BPL_NODE_PATH/$BLUE"
+       backupBPLNode $pwd "$BPL_NODE_PATH/$GREEN"
+    fi
+
+
+    if [ "$pwd" == "" -a "$nextDir" == "" ]
+    then
+        log "ERR" "Values not found for pwd and nextDir in installSoftware()."
+    else
+           cd $pwd
+           cleanDirectory $nextDir
+            cd $pwd
+            downloadSoftware $nextDir
+            cd $pwd
+            extractSoftwareCode $nextDir
+            cd $pwd
+            installDependencies $nextDir
+            cd $pwd
+    fi
+echo "DONE"
+}
+
+function createLogFile()
+{
+     cd $BPL_NODE_PATH
+     LOG_FILE="$PWD/softwareUpdates.log"
+}
+
+init $IPFS_LINK $1
