@@ -34,11 +34,6 @@ __private.verifyTransactionAsset = function (data, cb) {
 					msg = 'Invalid transaction IPFS hash asset.';
 				}
 					break;
-				case 'ipfsPath': if(data.ipfsPath !== rows[0].ipfsPath) {
-					valid = false;
-					msg = 'Invalid transaction IPFS path asset.';
-				}
-					break;
 				default: break;
 				}
 				if (!valid) {
@@ -61,7 +56,6 @@ __private.getDuplicate = function (data, cb) {
 	where.push('"versionLabel" = ${versionLabel}');
 	where.push('"triggerHeight" = ${triggerHeight}');
 	where.push('"ipfsHash" = ${ipfsHash}');
-	where.push('"ipfsPath" = ${ipfsPath}');
 
 	if (data.verifyingTransactionId) {
 		where.push('"verifyingTransactionId" = ${verifyingTransactionId}');
@@ -79,7 +73,6 @@ __private.getDuplicate = function (data, cb) {
 	params.versionLabel = data.versionLabel;
 	params.triggerHeight = data.triggerHeight;
 	params.ipfsHash = data.ipfsHash;
-	params.ipfsPath = data.ipfsPath;
 	params.verifyingTransactionId = data.verifyingTransactionId;
 	params.cancellationStatus = data.cancellationStatus;
 
@@ -97,7 +90,7 @@ __private.getDuplicate = function (data, cb) {
 
 __private.getUpdate = function (updateData) {
 	console.log('In getupdate >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>');
-	shell.exec('./scripts/getUpdate.sh ' + updateData.ipfsHash + ' '+ updateData.ipfsPath,
+	shell.exec('./scripts/getUpdate.sh ' + updateData.ipfsHash,
 		function (code, stdout, stderr) {
 			if(code) {
 				library.logger.error('Get update failed: ', stderr);
@@ -161,9 +154,6 @@ AutoUpdate.prototype.verify = function (trs, sender, cb) {
 		if (trs.asset.autoUpdate.triggerHeight <= block.height) {
 			return cb('Invalid trigger height asset.');
 		}
-	}
-	if (!trs.asset.autoUpdate.ipfsPath && !trs.asset.autoUpdate.ipfsPath.length) {
-		return cb('Invalid IPFS path asset.');
 	}
 	if (!(trs.asset.autoUpdate.cancellationStatus === true || trs.asset.autoUpdate.cancellationStatus === false)) {
 		return cb('Invalid cancellation status asset.');
@@ -286,14 +276,11 @@ AutoUpdate.prototype.schema = {
 		ipfsHash: {
 			type: 'string'
 		},
-		ipfsPath: {
-			type: 'string'
-		},
 		cancellationStatus: {
 			type: 'boolean'
 		}
 	},
-	required: ['triggerHeight','versionLabel', 'ipfsHash', 'ipfsPath','cancellationStatus']
+	required: ['triggerHeight','versionLabel', 'ipfsHash', 'cancellationStatus']
 };
 
 //
@@ -331,7 +318,6 @@ AutoUpdate.prototype.dbFields = [
 	'versionLabel',
 	'triggerHeight',
 	'ipfsHash',
-	'ipfsPath',
 	'verifyingTransactionId',
 	'cancellationStatus'
 ];
@@ -345,7 +331,6 @@ AutoUpdate.prototype.dbSave = function (trs) {
 			versionLabel: trs.asset.autoUpdate.versionLabel,
 			triggerHeight: trs.asset.autoUpdate.triggerHeight,
 			ipfsHash: trs.asset.autoUpdate.ipfsHash,
-			ipfsPath: trs.asset.autoUpdate.ipfsPath,
 			verifyingTransactionId: trs.asset.autoUpdate.verifyingTransactionId,
 			cancellationStatus:trs.asset.autoUpdate.cancellationStatus
 		}
