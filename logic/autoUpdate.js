@@ -96,6 +96,7 @@ __private.getDuplicate = function (data, cb) {
 };
 
 __private.getUpdate = function (updateData) {
+	console.log('In getupdate >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>');
 	shell.exec('./scripts/getUpdate.sh ' + updateData.ipfsHash + ' '+ updateData.ipfsPath,
 		function (code, stdout, stderr) {
 			if(code) {

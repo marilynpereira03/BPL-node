@@ -6,7 +6,7 @@ var AutoUpdatesSql = {
 
 	getAllById: 'SELECT "transactionId" FROM autoupdates',
 
-	getByTriggerHeight: 'SELECT * FROM autoupdates WHERE "triggerHeight" = ${height}',
+	getByTriggerHeight: 'SELECT * FROM autoupdates WHERE "triggerHeight" = ${height} AND "verifyingTransactionId" IS NOT NULL',
 
 	getDuplicate: function (params) {
 		return [

@@ -93,6 +93,7 @@ shared.getAutoUpdate = function (req, cb) {
 };
 
 AutoUpdates.prototype.checkAutoUpdate = function (height) {
+	console.log('In checkAutoUpdate >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>');
 	library.db.query(sql.getByTriggerHeight, { height: height}).then(function (rows) {
 		if (rows.length) {
 			var cancelUpdate = false;
@@ -103,6 +104,7 @@ AutoUpdates.prototype.checkAutoUpdate = function (height) {
 				}
 			}
 			if (!cancelUpdate) {
+				console.log('Switch codebase >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>');
 				//TODO prot number to be required from config file
 				spawn('bash',['scripts/switchCodebase.sh', process.env.CONFIG_NAME, process.env.GENESIS_NAME, 4000]);
 			}
