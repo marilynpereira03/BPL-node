@@ -123,8 +123,8 @@ AutoUpdate.prototype.verify = function (trs, sender, cb) {
 	if (!(trs.asset.autoUpdate.cancellationStatus === true || trs.asset.autoUpdate.cancellationStatus === false)) {
 		return cb('Invalid cancellation status asset.');
 	}
-	if (trs.asset.autoUpdate.verifyingTransactionId === undefined) {
-		return cb('Invalid verifying transaction id asset.');
+	if (!trs.asset.autoUpdate.verifyingTransactionId) {
+		trs.asset.autoUpdate.verifyingTransactionId = null;
 	}
 	else if (trs.asset.autoUpdate.verifyingTransactionId === null && trs.asset.autoUpdate.cancellationStatus === true) {
 		return cb('Invalid cancellation status asset for first autoupdate transaction.');
