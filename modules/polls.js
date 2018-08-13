@@ -149,7 +149,7 @@ shared.getPollResults = function (req, cb) {
 			if (!rows.length) {
 				return cb("No vote transactions for poll address: " + req.body.address);
 			}
-			return cb(null, { result: rows });
+			return cb(null, { results: rows });
 		}).catch(function (err) {
 			library.logger.error("stack", err);
 			return cb("Polls#getContract error");
