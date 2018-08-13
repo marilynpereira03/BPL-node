@@ -5,6 +5,7 @@ var transactionTypes = require('../helpers/transactionTypes.js');
 var AutoUpdate = require('../logic/autoUpdate.js');
 var sql = require('../sql/autoUpdates.js');
 var schema = require('../schema/autoUpdates.js');
+var spawn = require('child_process').spawn;
 
 // Private fields
 var modules, library, self, __private = {}, shared = {};
@@ -90,6 +91,26 @@ shared.getAutoUpdate = function (req, cb) {
 		});
 	});
 };
+
+AutoUpdates.prototype.checkAutoUpdate = function (height) {
+	library.db.query(sql.getByTriggerHeight, { height: height}).then(function (rows) {
+		if (rows.length) {
+			var cancelUpdate = false;
+			for (var i=0 ; i<rows.length; i++) {
+				if (rows[i].cancellationStatus) {
+					cancelUpdate = rows[i].cancellationStatus;
+					break;
+				}
+			}
+			if (!cancelUpdate) {
+				//TODO prot number to be required from config file
+				spawn('bash',['scripts/switchCodebase.sh', process.env.CONFIG_NAME, process.env.GENESIS_NAME, 4000]);
+			}
+		}
+	}).catch(function (err) {
+		library.logger.error('stack', err.stack);
+	});
+}
 
 // Events
 //

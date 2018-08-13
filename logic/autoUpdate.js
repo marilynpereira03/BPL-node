@@ -12,7 +12,7 @@ var modules, library, __private = {};
 function AutoUpdate () {}
 
 //Private methods
-__private.validateTransactionAsset = function (data, cb) {
+__private.verifyTransactionAsset = function (data, cb) {
 	library.db.query(sql.getByTransactionId, { transactionId: data.verifyingTransactionId}).then(function (rows) {
 		if (rows.length) {
 			var valid = true, msg = '';
@@ -56,17 +56,34 @@ __private.validateTransactionAsset = function (data, cb) {
 
 __private.getDuplicate = function (data, cb) {
 	var query = '';
+	var where = [], params = {};
+
+	where.push('"versionLabel" = ${versionLabel}');
+	where.push('"triggerHeight" = ${triggerHeight}');
+	where.push('"ipfsHash" = ${ipfsHash}');
+	where.push('"ipfsPath" = ${ipfsPath}');
 
 	if (data.verifyingTransactionId) {
-		query = sql.getDuplicateWithNotNullVerifyingTxId;
+		where.push('"verifyingTransactionId" = ${verifyingTransactionId}');
+		if (data.cancellationStatus) {
+			where.push('"cancellationStatus" = TRUE');
+		}
+		else {
+			where.push('"cancellationStatus" = FALSE');
+		}
 	}
 	else {
-		query = sql.getDuplicateWithNullVerifyingTxId;
+		where.push('"verifyingTransactionId" IS NULL');
 	}
 
-	library.db.query(query, { versionLabel: data.versionLabel,
-		triggerHeight: data.triggerHeight, ipfsHash: data.ipfsHash, ipfsPath: data.ipfsPath,
-		verifyingTransactionId: data.verifyingTransactionId}).then(function (rows) {
+	params.versionLabel = data.versionLabel;
+	params.triggerHeight = data.triggerHeight;
+	params.ipfsHash = data.ipfsHash;
+	params.ipfsPath = data.ipfsPath;
+	params.verifyingTransactionId = data.verifyingTransactionId;
+	params.cancellationStatus = data.cancellationStatus;
+
+	library.db.query(sql.getDuplicate({where: where}), params).then(function (rows) {
 		if(rows.length) {
 			return cb(rows[0].transactionId);
 		}
@@ -147,9 +164,17 @@ AutoUpdate.prototype.verify = function (trs, sender, cb) {
 	if (!trs.asset.autoUpdate.ipfsPath && !trs.asset.autoUpdate.ipfsPath.length) {
 		return cb('Invalid IPFS path asset.');
 	}
+	if (!(trs.asset.autoUpdate.cancellationStatus === true || trs.asset.autoUpdate.cancellationStatus === false)) {
+		return cb('Invalid cancellation status asset.');
+	}
 	if (trs.asset.autoUpdate.verifyingTransactionId === undefined) {
 		return cb('Invalid verifying transaction id asset.');
 	}
+	else if (trs.asset.autoUpdate.verifyingTransactionId === null && trs.asset.autoUpdate.cancellationStatus === true) {
+		return cb('Invalid cancellation status asset for first autoupdate transaction.');
+	}
+
+
 	async.parallel([
 		function(callback) {
 			__private.getDuplicate(trs.asset.autoUpdate, function(res) {
@@ -163,7 +188,7 @@ AutoUpdate.prototype.verify = function (trs, sender, cb) {
 		},
 		function(callback) {
 			if (trs.asset.autoUpdate.verifyingTransactionId) {
-				__private.validateTransactionAsset(trs.asset.autoUpdate, function (err) {
+				__private.verifyTransactionAsset(trs.asset.autoUpdate, function (err) {
 					if (err) {
 						callback(err);
 					}
@@ -262,9 +287,12 @@ AutoUpdate.prototype.schema = {
 		},
 		ipfsPath: {
 			type: 'string'
+		},
+		cancellationStatus: {
+			type: 'boolean'
 		}
 	},
-	required: ['versionLabel', 'ipfsHash', 'ipfsPath']
+	required: ['triggerHeight','versionLabel', 'ipfsHash', 'ipfsPath','cancellationStatus']
 };
 
 //
@@ -303,7 +331,8 @@ AutoUpdate.prototype.dbFields = [
 	'triggerHeight',
 	'ipfsHash',
 	'ipfsPath',
-	'verifyingTransactionId'
+	'verifyingTransactionId',
+	'cancellationStatus'
 ];
 
 AutoUpdate.prototype.dbSave = function (trs) {
@@ -316,7 +345,8 @@ AutoUpdate.prototype.dbSave = function (trs) {
 			triggerHeight: trs.asset.autoUpdate.triggerHeight,
 			ipfsHash: trs.asset.autoUpdate.ipfsHash,
 			ipfsPath: trs.asset.autoUpdate.ipfsPath,
-			verifyingTransactionId: trs.asset.autoUpdate.verifyingTransactionId
+			verifyingTransactionId: trs.asset.autoUpdate.verifyingTransactionId,
+			cancellationStatus:trs.asset.autoUpdate.cancellationStatus
 		}
 	};
 };
@@ -326,8 +356,8 @@ AutoUpdate.prototype.dbSave = function (trs) {
 
 //
 AutoUpdate.prototype.afterSave = function (trs, cb) {
-	if(trs.asset.autoUpdate.verifyingTransactionId) {
-		//__private.getUpdate(trs.asset.autoUpdate);
+	if(trs.asset.autoUpdate.verifyingTransactionId && !trs.asset.autoUpdate.cancellationStatus) {
+		__private.getUpdate(trs.asset.autoUpdate);
 	}
 	return cb();
 };

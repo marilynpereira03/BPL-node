@@ -6,13 +6,14 @@ var AutoUpdatesSql = {
 
 	getAllById: 'SELECT "transactionId" FROM autoupdates',
 
-	getByTriggerHeight: 'SELECT * FROM autoupdates where "triggerHeight" = ${height}',
+	getByTriggerHeight: 'SELECT * FROM autoupdates WHERE "triggerHeight" = ${height}',
 
-	getDuplicateWithNullVerifyingTxId: 'SELECT "transactionId" FROM autoupdates WHERE "versionLabel" = ${versionLabel} AND '+
-	'"triggerHeight" = ${triggerHeight} AND "ipfsHash" = ${ipfsHash} AND "ipfsPath" = ${ipfsPath} AND "verifyingTransactionId" IS NULL',
-
-	getDuplicateWithNotNullVerifyingTxId: 'SELECT "transactionId" FROM autoupdates WHERE "versionLabel" = ${versionLabel} AND '+
-	'"triggerHeight" = ${triggerHeight} AND "ipfsHash" = ${ipfsHash} AND "ipfsPath" = ${ipfsPath} AND "verifyingTransactionId" = ${verifyingTransactionId}'
+	getDuplicate: function (params) {
+		return [
+			'SELECT "transactionId" FROM autoupdates ',
+			(params.where.length ? 'WHERE ' + params.where.join(' AND ') : '')
+		].filter(Boolean).join(' ');
+	}
 };
 
 module.exports = AutoUpdatesSql;

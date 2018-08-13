@@ -111,7 +111,7 @@ var config = {
 		blockchain: './modules/blockchain.js',
 		nodeManager: './modules/nodeManager.js',
 		blockRewards: './modules/blockRewards.js',
-		autoUpdates: './modules/autoUpdates.js',
+		autoupdates: './modules/autoUpdates.js',
 		polls: './modules/polls.js'
 	}
 };
