@@ -100,6 +100,9 @@ AutoUpdate.prototype.calculateFee = function (trs) {
 
 //
 AutoUpdate.prototype.verify = function (trs, sender, cb) {
+	if (trs.senderPublicKey !== constants.autoupdate.senderPublicKey) {
+		return cb('Invalid sender public key.');
+	}
 	if (!trs.asset || !trs.asset.autoUpdate) {
 		return cb('Invalid transaction asset.');
 	}
