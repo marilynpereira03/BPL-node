@@ -12,42 +12,7 @@ var modules, library, __private = {};
 function AutoUpdate () {}
 
 //Private methods
-__private.verifyTransactionAsset = function (data, cb) {
-	library.db.query(sql.getByTransactionId, { transactionId: data.verifyingTransactionId}).then(function (rows) {
-		if (rows.length) {
-			var valid = true, msg = '';
 
-			for (var prop in rows[0]) {
-				switch (prop) {
-				case 'versionLabel': if(data.versionLabel !== rows[0].versionLabel) {
-					valid = false;
-					msg = 'Invalid transaction version label asset.';
-				}
-					break;
-				case 'triggerHeight': if(data.triggerHeight !== rows[0].triggerHeight) {
-					valid = false;
-					msg = 'Invalid transaction trigger height asset.';
-				}
-					break;
-				case 'ipfsHash': if(data.ipfsHash !== rows[0].ipfsHash) {
-					valid = false;
-					msg = 'Invalid transaction IPFS hash asset.';
-				}
-					break;
-				default: break;
-				}
-				if (!valid) {
-					return cb(msg);
-				}
-			}
-			return cb(null);
-		}
-		return cb ('Invalid verifying transaction id.');
-	}).catch(function (err) {
-		library.logger.error('stack', err.stack);
-		return cb('Failed to get verifying transaction.');
-	});
-};
 
 __private.getDuplicate = function (data, cb) {
 	var query = '';
@@ -179,7 +144,7 @@ AutoUpdate.prototype.verify = function (trs, sender, cb) {
 		},
 		function(callback) {
 			if (trs.asset.autoUpdate.verifyingTransactionId) {
-				__private.verifyTransactionAsset(trs.asset.autoUpdate, function (err) {
+				modules.autoupdates.verifyTransactionAsset(trs.asset.autoUpdate, function (err) {
 					if (err) {
 						callback(err);
 					}

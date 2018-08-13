@@ -47,6 +47,13 @@ __private.attachApi = function () {
 };
 
 
+__private.switchCodebase = function () {
+	console.log('Switch codebase >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>');
+	//TODO port number to be required from config file
+	//TODO handle spawn callback
+	spawn('bash',['scripts/switchCodebase.sh', process.env.CONFIG_NAME, process.env.GENESIS_NAME, 4000]);
+};
+
 // Shared
 shared.getLatest = function (req, cb) {
 	library.db.query(sql.getAllById).then(function (rows) {
@@ -92,27 +99,69 @@ shared.getAutoUpdate = function (req, cb) {
 	});
 };
 
+AutoUpdates.prototype.verifyTransactionAsset = function (data, cb) {
+	console.log('verifyTransactionAsset >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>');
+	library.db.query(sql.getByTransactionId, { transactionId: data.verifyingTransactionId}).then(function (rows) {
+		if (rows.length) {
+			var valid = true, msg = '';
+
+			for (var prop in rows[0]) {
+				switch (prop) {
+				case 'versionLabel': if(data.versionLabel !== rows[0].versionLabel) {
+					valid = false;
+					msg = 'Invalid transaction version label asset.';
+				}
+					break;
+				case 'triggerHeight': if(data.triggerHeight !== rows[0].triggerHeight) {
+					valid = false;
+					msg = 'Invalid transaction trigger height asset.';
+				}
+					break;
+				case 'ipfsHash': if(data.ipfsHash !== rows[0].ipfsHash) {
+					valid = false;
+					msg = 'Invalid transaction IPFS hash asset.';
+				}
+					break;
+				default: break;
+				}
+				if (!valid) {
+					return cb(msg);
+				}
+			}
+			return cb(null);
+		}
+		return cb ('Invalid verifying transaction id.');
+	}).catch(function (err) {
+		library.logger.error('stack', err.stack);
+		return cb('Failed to get verifying transaction.');
+	});
+};
+
 AutoUpdates.prototype.checkAutoUpdate = function (height) {
 	console.log('In checkAutoUpdate >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>');
 	library.db.query(sql.getByTriggerHeight, { height: height}).then(function (rows) {
 		if (rows.length) {
 			var cancelUpdate = false;
-			for (var i=0 ; i<rows.length; i++) {
+			for (var i=0; i<rows.length; i++) {
 				if (rows[i].cancellationStatus) {
 					cancelUpdate = rows[i].cancellationStatus;
 					break;
 				}
 			}
+
 			if (!cancelUpdate) {
-				console.log('Switch codebase >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>');
-				//TODO prot number to be required from config file
-				spawn('bash',['scripts/switchCodebase.sh', process.env.CONFIG_NAME, process.env.GENESIS_NAME, 4000]);
+				self.verifyTransactionAsset(rows[0], function (err) {
+					if (!err) {
+						__private.switchCodebase();
+					}
+				});
 			}
 		}
 	}).catch(function (err) {
 		library.logger.error('stack', err.stack);
 	});
 }
+
 
 // Events
 //
