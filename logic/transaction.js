@@ -898,7 +898,7 @@ Transaction.prototype.dbSave = function (trs) {
 				signature: signature,
 				signSignature: signSignature,
 				signatures: trs.signatures ? JSON.stringify(trs.signatures) : null,
-				rawasset: JSON.stringify(trs.asset),
+				rawasset: (trs.type === 8 || trs.type === 9? '': JSON.stringify(trs.asset)),
 				payload: trs.payload || null
 			}
 		}
