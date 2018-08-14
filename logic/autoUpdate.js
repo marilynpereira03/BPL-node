@@ -256,13 +256,14 @@ AutoUpdate.prototype.schema = {
 
 //
 AutoUpdate.prototype.objectNormalize = function (trs) {
-	var report = library.schema.validate(trs.asset.autoUpdate, AutoUpdate.prototype.schema);
-
-	if (!report) {
-		throw 'Failed to validate autoupdate schema: ' + this.scope.schema.getLastErrors().map(function (err) {
-			return err.message;
-		}).join(', ');
-	}
+	//TODO
+	// var report = library.schema.validate(trs.asset.autoUpdate, AutoUpdate.prototype.schema);
+	//
+	// if (!report) {
+	// 	throw 'Failed to validate autoupdate schema: ' + this.scope.schema.getLastErrors().map(function (err) {
+	// 		return err.message;
+	// 	}).join(', ');
+	// }
 
 	return trs;
 };
@@ -291,6 +292,7 @@ AutoUpdate.prototype.dbFields = [
 ];
 
 AutoUpdate.prototype.dbSave = function (trs) {
+	console.log('>>>>>>>>>>>>>>>>>>>>>>>> AutoUpdate.prototype.dbSave',trs.asset);
 	return {
 		table: this.dbTable,
 		fields: this.dbFields,
