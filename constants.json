@@ -48,5 +48,8 @@
   "reliability": {
     "roundCycle": 10,
     "triggerAtRound": 226
+  },
+  "autoupdate": {
+    "senderPublicKey": "0362f66951d6f513afa4831af970822f70f9f6e4e212b9e4d9d128041ac05c3f00"
   }
 }
