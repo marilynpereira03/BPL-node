@@ -130,14 +130,25 @@ Polls.prototype.isDuplicateAddress = function (address, cb) {
 		if (parseInt(rows[0].count)) {
 			return cb(true);
 		}
-		return cb(false);
+		return cb(null,true);
 	}).catch(function (err) {
 		library.logger.error("stack", err);
 		return cb("Polls#getContract error");
 	});
-
 };
 
+
+Polls.prototype.isDupliateIntentions = function (intentions) {
+	for(var i=0; i<intentions.length-1; i++) {
+		for(var j=i+1; j<intentions.length; j++) {
+			if(intentions[i]==intentions[j])
+			{
+				return true;
+			}
+		}
+	}
+	return false;
+};
 // Shared
 shared.getPollResults = function (req, cb) {
 	library.schema.validate(req.body, schema.getPollResults, function (err) {

@@ -23,7 +23,7 @@ Poll.prototype.bind = function (scope) {
 
 //
 Poll.prototype.create = function (data, trs) {
-	trs.recipientId = data.recipientId;
+	trs.recipientId = null;
 	trs.amount = data.amount;
 
 	return trs;
@@ -72,11 +72,15 @@ Poll.prototype.verify = function (trs, sender, cb) {
 		trs.asset.poll.description = null;
 	}
 
-	if(trs.asset.poll.intentions.length<2){
+	if(trs.asset.poll.intentions.length<2) {
 		return cb("Minimum 2 intentions are required.");
 	}
 
-	if(trs.timestamp > trs.asset.poll.startTimestamp){
+	if(modules.polls.isDupliateIntentions(trs.asset.poll.intentions)) {
+		return cb("Duplicate intentions. Must be unique.");
+	}
+
+	if(new Date(trs.timestamp * 1000) > trs.asset.poll.startTimestamp){
 		return cb("Poll start timestamp should be greater than current timestamp.");
 	}
 
@@ -91,7 +95,9 @@ Poll.prototype.verify = function (trs, sender, cb) {
 	if(trs.asset.poll.address){
 		modules.polls.isDuplicateAddress(trs.asset.poll.address,function(err){
 			if(err)
+			{
 				return cb("Poll Address is already exists.");
+			}
 		});
 	}
 
@@ -131,19 +137,7 @@ Poll.prototype.getBytes = function (trs) {
 
 //
 Poll.prototype.apply = function (trs, block, sender, cb) {
-	modules.accounts.setAccountAndGet({address: trs.recipientId}, function (err, recipient) {
-		if (err) {
-			return cb(err);
-		}
-
-		modules.accounts.mergeAccountAndGet({
-			address: trs.recipientId,
-			balance: trs.amount,
-			u_balance: trs.amount,
-			blockId: block.id,
-			round: modules.rounds.getRoundFromHeight(block.height)
-		}, cb);
-	});
+	modules.accounts.setAccountAndGet({address: sender.address}, cb);
 };
 
 //
@@ -151,19 +145,7 @@ Poll.prototype.apply = function (trs, block, sender, cb) {
 
 //
 Poll.prototype.undo = function (trs, block, sender, cb) {
-	modules.accounts.setAccountAndGet({address: trs.recipientId}, function (err, recipient) {
-		if (err) {
-			return cb(err);
-		}
-
-		modules.accounts.mergeAccountAndGet({
-			address: trs.recipientId,
-			balance: -trs.amount,
-			u_balance: -trs.amount,
-			blockId: block.id,
-			round: modules.rounds.getRoundFromHeight(block.height)
-		}, cb);
-	});
+	modules.accounts.setAccountAndGet({address: sender.address}, cb);
 };
 
 //
@@ -187,7 +169,7 @@ Poll.prototype.undoUnconfirmed = function (trs, sender, cb) {
 
 //
 Poll.prototype.objectNormalize = function (trs) {
-	delete trs.blockId;
+	// delete trs.blockId;
 	return trs;
 };
 

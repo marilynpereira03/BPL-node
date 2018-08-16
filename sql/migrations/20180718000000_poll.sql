@@ -3,11 +3,11 @@ BEGIN;
 CREATE TABLE IF NOT EXISTS "polls"(
   "name" VARCHAR(50) NOT NULL,
   "address" VARCHAR(50) UNIQUE NOT NULL,
-  "startTimestamp" INT NOT NULL,
-  "endTimestamp" INT NOT NULL,
+  "startTimestamp" TIMESTAMP NOT NULL,
+  "endTimestamp" TIMESTAMP NOT NULL,
   "intentions" TEXT[] NOT NULL,
-  "description" VARCHAR(100) NOT NULL,
-  "transactionId" VARCHAR(64) default NULL,
+  "description" VARCHAR(100) DEFAULT NULL,
+  "transactionId" VARCHAR(64) NOT NULL,
   FOREIGN KEY("transactionId") REFERENCES transactions(id) ON DELETE CASCADE
 );
 
