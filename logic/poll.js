@@ -68,7 +68,7 @@ Poll.prototype.verify = function (trs, sender, cb) {
 		return cb("Invalid poll intentions. Must be an array.");
 	}
 
-	if (trs.asset.poll.description === undefined) {
+	if (!trs.asset.poll.description) {
 		trs.asset.poll.description = null;
 	}
 
