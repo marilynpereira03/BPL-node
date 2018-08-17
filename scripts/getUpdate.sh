@@ -36,7 +36,6 @@ function init ()
         installSoftware
     else
         log "ERR" "Invalid number of arguments passed to init()."
-        echo "ERR | Invalid number of arguments passed to init()."
     fi
 }
 
@@ -56,7 +55,7 @@ function init ()
 
 function log(){
 
-  #echo -e "[$1] $DATE | $2 "  >> $LOG_FILE
+  echo -e "[$1] $DATE | $2 "  >> $LOG_FILE
   echo -e "[$1] $DATE | $2 "
  }
 
@@ -77,7 +76,6 @@ function log(){
   function downloadSoftware()
 {
 
-echo "**************************************************** $1"
 local downloadDir=$1
 cd $downloadDir
 echo "DOWNLOAD DIR $downloadDir"
@@ -109,7 +107,6 @@ fi
 
 function extractSoftwareCode ()
 {
-  echo "********************************************************** $1"
     if [ "$1" ]
     local inputDir=$1
     cd $inputDir
@@ -145,7 +142,6 @@ function extractSoftwareCode ()
 function installDependencies()
 {
 
-  echo "********************************************************************** $1"
 if [ "$1" ]
 then
 local inputDir=$1
@@ -306,9 +302,12 @@ echo "DONE"
 }
 
 function createLogFile()
-{
-     cd $BPL_NODE_PATH
+{ cd $BPL_NODE_PATH
+    if [ ! -e "softwareUpdates.log" ]
+    then  
+     echo >> softwareUpdates.log
      LOG_FILE="$PWD/softwareUpdates.log"
+    fi
 }
 
 init $IPFS_LINK $1

@@ -27,6 +27,8 @@ function copyData(){
     log "inf" "Stopping the Current running node process...." $4
     kill -9 $(lsof -t -i:$port)
     sleep 2
+    forever stop app.js
+    sleep 2
     log "inf" "Process killed" $4
 
     cd $5
