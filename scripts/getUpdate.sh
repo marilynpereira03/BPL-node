@@ -306,8 +306,9 @@ function createLogFile()
     if [ ! -e "softwareUpdates.log" ]
     then  
      echo >> softwareUpdates.log
-     LOG_FILE="$PWD/softwareUpdates.log"
     fi
+     LOG_FILE="$PWD/softwareUpdates.log"
+
 }
 
 init $IPFS_LINK $1
