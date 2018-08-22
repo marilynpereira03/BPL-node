@@ -799,13 +799,23 @@ shared.sync = function (req, cb) {
 
 shared.autoconfigure = function (req, cb) {
 	var network = library.config.network;
-	network.nethash = library.config.nethash;
+
 	return cb(null, {
-		network: network,
+		network: {
+			"nethash": library.config.nethash,
+			"token": network.client.token,
+			"tokenShortName": network.client.tokenShortName,
+			"symbol": network.client.symbol,
+			"explorer": network.client.explorer,
+			"version": network.pubKeyHash,
+			"messagePrefix": network.messagePrefix,
+			"bip32": network.bip32,
+			"wif": network.wif
+		},
 		config: {
 			"delegates": constants.activeDelegates,
-	    "epochTime": constants.epochTime,
-	    "interval": constants.blocktime
+			"epochTime": constants.epochTime,
+			"interval": constants.blocktime
 		}
 	});
 };

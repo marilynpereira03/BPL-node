@@ -1,10 +1,10 @@
 {
-  "activeDelegates": 51,
+  "activeDelegates": 201,
   "maximumVotes": 1,
   "addressLength": 208,
   "blockHeaderLength": 248,
   "confirmationLength": 77,
-  "epochTime": "1970-01-01T00:00:00.000Z",
+  "epochTime": "2017-03-21T13:00:00.000Z",
   "fees": {
     "send": 10000000,
     "vote": 100000000,
@@ -39,16 +39,12 @@
 			"0.000002077132936507936",
 			"0.000001038566468253968"
 		],
-		"offset": 5760,
-		"distance": 5760
+		"offset": 17280,
+		"distance": 2102400
   },
   "signatureLength": 196,
   "totalAmount": 2500000000000000,
   "unconfirmedTransactionTimeOut": 10800,
-  "reliability": {
-    "roundCycle": 10,
-    "triggerAtRound": 226
-  },
   "autoupdate": {
     "senderPublicKey": "031a3c43aebf7365dc55274ae7ebaaa83ec596b627067e6805c44f0b1cabd07cac"
   }
