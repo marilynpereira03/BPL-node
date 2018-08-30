@@ -1,10 +1,10 @@
 {
-  "activeDelegates": 201,
+  "activeDelegates": 51,
   "maximumVotes": 1,
   "addressLength": 208,
   "blockHeaderLength": 248,
   "confirmationLength": 77,
-  "epochTime": "2017-03-21T13:00:00.000Z",
+  "epochTime": "1970-01-01T00:00:00.000Z",
   "fees": {
     "send": 10000000,
     "vote": 100000000,
