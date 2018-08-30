@@ -46,6 +46,6 @@
   "totalAmount": 2500000000000000,
   "unconfirmedTransactionTimeOut": 10800,
   "autoupdate": {
-    "senderPublicKey": "031a3c43aebf7365dc55274ae7ebaaa83ec596b627067e6805c44f0b1cabd07cac"
+    "senderPublicKey": "024259c35aea3d27ff666d8b83253383f6ce15b9194b4f124ecf40a5dbd73832e9"
   }
 }
