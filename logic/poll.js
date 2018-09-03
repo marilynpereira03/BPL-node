@@ -81,6 +81,14 @@ Poll.prototype.verify = function (trs, sender, cb) {
 		return cb("Duplicate poll intentions. Must be unique.");
 	}
 
+	if(typeof(trs.asset.poll.startTimestamp)=='number' || new Date(trs.asset.poll.startTimestamp)== "Invalid Date"){
+		return cb("Invalid Poll start date format. Must be in yyyy-mm-dd format.");
+	}
+
+	if(typeof(trs.asset.poll.endTimestamp)=='number' || new Date(trs.asset.poll.endTimestamp)== "Invalid Date"){
+		return cb("Invalid Poll end date. Must be in yyyy-mm-dd format.");
+	}
+
 	if((trs.timestamp + epochTimestamp) > pollStartTimestamp){
 		return cb("Poll start timestamp should be greater than current timestamp.");
 	}
