@@ -13,7 +13,8 @@ var AutoUpdatesSql = {
 			'SELECT "transactionId" FROM autoupdates ',
 			(params.where.length ? 'WHERE ' + params.where.join(' AND ') : '')
 		].filter(Boolean).join(' ');
-	}
-};
+	},
 
+	getLastAppliedAutoUpdate: 'SELECT "versionLabel", "ipfsHash", "triggerHeight" FROM autoupdates WHERE "triggerHeight" < ${height} AND "verifyingTransactionId" IS NOT NULL ORDER BY "triggerHeight" DESC LIMIT 1'
+};
 module.exports = AutoUpdatesSql;

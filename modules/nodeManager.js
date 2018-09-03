@@ -138,7 +138,7 @@ NodeManager.prototype.onPeersUpdated = function() {
 NodeManager.prototype.onNetworkObserved = function(network){
 	if(!__private.lastBlock || network.height > __private.lastBlock.height){
 		library.bus.message('downloadBlocks', function(err,lastBlock){
-
+			modules.autoupdates.getMissedUpdate();
 		});
 	}
 }

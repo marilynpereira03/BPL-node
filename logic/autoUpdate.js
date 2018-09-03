@@ -3,7 +3,6 @@
 var async = require('async');
 var constants = require('../constants.json');
 var sql = require('../sql/autoUpdates.js');
-var shell = require('shelljs');
 
 // Private fields
 var modules, library, __private = {};
@@ -12,8 +11,6 @@ var modules, library, __private = {};
 function AutoUpdate () {}
 
 //Private methods
-
-
 __private.getDuplicate = function (data, cb) {
 	var query = '';
 	var where = [], params = {};
@@ -51,19 +48,6 @@ __private.getDuplicate = function (data, cb) {
 		library.logger.error('stack', err.stack);
 		return cb('Failed to get duplicate autoupdate transaction.');
 	});
-};
-
-__private.getUpdate = function (updateData) {
-	console.log('In getupdate >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>');
-	shell.exec('./scripts/getUpdate.sh ' + updateData.ipfsHash,
-		function (code, stdout, stderr) {
-			if(code) {
-				library.logger.error('Get update failed: ', stderr);
-			}
-			else {
-				library.logger.info('Get update was successful.');
-			}
-		});
 };
 
 // Public methods
@@ -119,7 +103,8 @@ AutoUpdate.prototype.verify = function (trs, sender, cb) {
 	}
 	else {
 		var block = modules.blockchain.getLastBlock();
-		if (trs.asset.autoUpdate.triggerHeight <= block.height) {
+		//TODO + 5760
+		if (trs.asset.autoUpdate.triggerHeight <= block.height /*+ 5760*/) {
 			return cb('Invalid trigger height asset.');
 		}
 	}
@@ -237,7 +222,7 @@ AutoUpdate.prototype.schema = {
 		triggerHeight: {
 			type: 'integer',
 		},
-		//  verifyingTransactionId: null
+		//TODO  verifyingTransactionId: null
 		versionLabel: {
 			type: 'string',
 		},
@@ -292,7 +277,6 @@ AutoUpdate.prototype.dbFields = [
 ];
 
 AutoUpdate.prototype.dbSave = function (trs) {
-	console.log('>>>>>>>>>>>>>>>>>>>>>>>> AutoUpdate.prototype.dbSave',trs.asset);
 	return {
 		table: this.dbTable,
 		fields: this.dbFields,
@@ -313,7 +297,7 @@ AutoUpdate.prototype.dbSave = function (trs) {
 //
 AutoUpdate.prototype.afterSave = function (trs, cb) {
 	if(trs.asset.autoUpdate.verifyingTransactionId && !trs.asset.autoUpdate.cancellationStatus) {
-		__private.getUpdate(trs.asset.autoUpdate);
+		//modules.autoupdates.downloadUpdate(trs.asset.autoUpdate.ipfsHash, function (err) {});
 	}
 	return cb();
 };

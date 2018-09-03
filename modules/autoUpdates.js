@@ -6,6 +6,8 @@ var AutoUpdate = require('../logic/autoUpdate.js');
 var sql = require('../sql/autoUpdates.js');
 var schema = require('../schema/autoUpdates.js');
 var spawn = require('child_process').spawn;
+var version = require('../package.json').version;
+var shell = require('shelljs');
 
 // Private fields
 var modules, library, self, __private = {}, shared = {};
@@ -48,10 +50,9 @@ __private.attachApi = function () {
 
 
 __private.switchCodebase = function () {
-	console.log('Switch codebase >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>');
 	//TODO port number to be required from config file
 	//TODO handle spawn callback
-	spawn('bash',['scripts/switchCodebase.sh', process.env.CONFIG_NAME, process.env.GENESIS_NAME, 4000]);
+	spawn('bash',['scripts/switchCodebase.sh', process.env.CONFIG_NAME, process.env.GENESIS_NAME, 4001]);
 };
 
 // Shared
@@ -64,8 +65,7 @@ shared.getLatest = function (req, cb) {
 				if(row.length) {
 					return cb(null, { update: row[0] });
 				}
-
-				return cb('Couldn\'t find auto update: '+req.body.id);
+				return cb('Couldn\'t find latest auto update.');
 			}).catch(function (err) {
 				library.logger.error('stack', err.stack);
 				return cb('Couldn\'t find latest auto update.');
@@ -100,7 +100,6 @@ shared.getAutoUpdate = function (req, cb) {
 };
 
 AutoUpdates.prototype.verifyTransactionAsset = function (data, cb) {
-	console.log('verifyTransactionAsset >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>');
 	library.db.query(sql.getByTransactionId, { transactionId: data.verifyingTransactionId}).then(function (rows) {
 		if (rows.length) {
 			var valid = true, msg = '';
@@ -138,7 +137,6 @@ AutoUpdates.prototype.verifyTransactionAsset = function (data, cb) {
 };
 
 AutoUpdates.prototype.checkAutoUpdate = function (height) {
-	console.log('In checkAutoUpdate >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>');
 	library.db.query(sql.getByTriggerHeight, { height: height}).then(function (rows) {
 		if (rows.length) {
 			var cancelUpdate = false;
@@ -160,7 +158,51 @@ AutoUpdates.prototype.checkAutoUpdate = function (height) {
 	}).catch(function (err) {
 		library.logger.error('stack', err.stack);
 	});
-}
+};
+
+__private.isSoftwareUpToDate = function (cb) {
+	library.db.query(sql.getLastAppliedAutoUpdate, {height: 9000}).then(function (rows) {
+		if (!rows.length) {
+			return cb('Couldn\'t find last applied auto update.');
+		}
+
+		if (version === rows[0].versionLabel) {
+			return cb(null, {status: true});
+		}
+		else {
+			return cb(null, {status: false, update: rows[0]});
+		}
+	});
+};
+
+
+AutoUpdates.prototype.getMissedUpdate = function () {
+	__private.isSoftwareUpToDate(function (err, res) {
+		if (!err && !res.status) {
+			process.env.DOWNLOAD_IN_PROGRESS = true;
+			self.downloadUpdate(res.update.ipfsHash, function (err) {
+				if (!err) {
+					self.checkAutoUpdate(res.update.triggerHeight);
+				}
+			});
+
+		}
+	});
+};
+
+AutoUpdates.prototype.downloadUpdate = function (hash, cb) {
+	shell.exec('./scripts/downloadUpdate.sh ' + hash,
+		function (code, stdout, stderr) {
+			if(code) {
+				library.logger.error('Get update failed: ', stderr);
+				return cb('Get update failed: '+ stderr)
+			}
+			else {
+				library.logger.info('Get update was successful.');
+				return cb(null)
+			}
+		});
+};
 
 
 // Events
