@@ -52,7 +52,9 @@ __private.attachApi = function () {
 __private.switchCodebase = function () {
 	//TODO port number to be required from config file
 	//TODO handle spawn callback
-	spawn('bash',['scripts/switchCodebase.sh', process.env.CONFIG_NAME, process.env.GENESIS_NAME, 4001]);
+	if (process.env.DOWNLOAD_STATUS === "success") {
+		spawn('bash',['scripts/switchCodebase.sh', process.env.CONFIG_NAME, process.env.GENESIS_NAME, 4001]);
+	}
 };
 
 // Shared
@@ -193,13 +195,15 @@ AutoUpdates.prototype.getMissedUpdate = function () {
 AutoUpdates.prototype.downloadUpdate = function (hash, cb) {
 	shell.exec('./scripts/downloadUpdate.sh ' + hash,
 		function (code, stdout, stderr) {
-			if(code) {
+			if (code) {
+				process.env.DOWNLOAD_STATUS = "failure";
 				library.logger.error('Get update failed: ', stderr);
-				return cb('Get update failed: '+ stderr)
+				return cb('Get update failed: '+ stderr);
 			}
 			else {
+				process.env.DOWNLOAD_STATUS = "success";
 				library.logger.info('Get update was successful.');
-				return cb(null)
+				return cb(null);
 			}
 		});
 };

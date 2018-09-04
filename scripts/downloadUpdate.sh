@@ -12,11 +12,9 @@ BLUE_DIR_PATH="./../../$BLUE"
 GREEN_DIR_PATH="./../../$GREEN"
 DATE=`date '+%Y-%m-%d %H:%M:%S'`
 
-BLUE=`tput setaf 4`
+BLU=`tput setaf 4`
 RESET=`tput sgr0`
-
-touch status.txt
-STATUS="$PWD/status.txt"
+RED=`tput setaf 1`
 
 function init ()
 {
@@ -33,8 +31,8 @@ function init ()
 #  log(): writes logs to file softwareUpdates.log
 function log ()
 {
-  echo -e "${BLUE}[$1] $DATE | $2 ${RESET}"  >> $LOG_FILE
-  echo -e "[$1] $DATE | $2 "
+  echo -e "[$1] $DATE | $2"  >> $LOG_FILE
+  echo -e "${BLU}[$1] $DATE | $2 ${RESET}"
 }
 
 #  downloadNodeSoftware(): downloads BPL-node.tar.gz from IPFS to Green/Blue directory to path specified in arg1
@@ -50,13 +48,10 @@ function downloadSoftware ()
   if curl --fail $IPFS_LINK$IPFS_HASH -o $FILE_NAME$FILE_EXTENSION
     then
         log "INF" "Successfully downloaded BPL-node software."
-        echo "TRUE" > $STATUS
-        log "INF" "$STATUS in downloadSoftware else"
     else
-        echo "FALSE" > $STATUS
         log "ERR" "Failed to download BPL Software from IPFS"
         getStatus=$?
-        log "ERR" "$STATUS in downloadSoftware if"
+        exitScript $getStatus "downloadSoftware"
   fi
 }
 
@@ -71,20 +66,17 @@ function extractSoftwareCode ()
           then
               log "INF" "Extracting $FILE_NAME to directory: $PWD"
               tar -xvzf $FILE_NAME$FILE_EXTENSION
-              exitStatus=$?
-            if [ $exitStatus == 0 ]
+              getStatus=$?
+            if [ $getStatus == 0 ]
               then
                   log "INF" "Successfully extracted $FILE_NAME to directory: $PWD"
                   log "INF" "Removing $FILE_NAME from directory: $PWD"
                   rm -rf $FILE_NAME$FILE_EXTENSION
                   log "INF" "Successfully removed $FILE_NAME from directory: $PWD"
-                  log "INF" "$STATUS in extractSoftware"
-                  echo "TRUE" > $STATUS
               else
                   log "ERR" "Failed to extract $FILE_NAME$FILE_EXTENSION"
-                  echo "FALSE" > $STATUS
-                  log "ERR" "$STATUS in extractSoftware else"
-                  #exit $exitStatus
+                  exitScript $getStatus "extractSoftwareCode"
+
             fi
         fi
     fi
@@ -104,9 +96,11 @@ function installDependencies ()
               log "INF" "Installing BPL-node software dependencies to directory: $PWD"
               npm install libpq secp256k1
               npm install
+              getStatus=$?
               log "INF" "Successfully installed BPL-node software dependencies."
           else
               log "ERR" "Unable to install BPL-node software dependencies to directory: $PWD"
+              exitScript $getStatus "installDependencies"
         fi
     else
         log "ERR" "Invalid number of arguments passed to installDependencies()."
@@ -123,9 +117,11 @@ function backupBPLNode ()
         cd $inputDir
         log "INF" "Taking backup of BPL-node software from $inputDir to $backupDir "
         cp -r $inputDir $backupDir
+        getStatus=$?
         log "INF" "Successfully taken backup of BPL-node software."
     else
         log "ERR" "Unable to take backup of BPL-node software from $1 to $2 "
+        exitScript $getStatus "backupBPLNode"
   fi
 }
 
@@ -174,13 +170,15 @@ function installSoftware ()
                 log "INF" "We are in $BLUE directory $PWD"
         fi
       else
-          local pwd=$PWD
+          initPath=$PWD
+          pwd=$PWD
           mkdir -p "$BPL_NODE_PATH"
           createLogFile
           cd $pwd
           log "INF" "Creating $BLUE and $GREEN directories."
           mkdir -p "$BPL_NODE_PATH/$BLUE"
           mkdir -p "$BPL_NODE_PATH/$GREEN"
+          initValue="TRUE"
           log "INF" "Successfully created $BLUE and $GREEN directories."
           nextDir="$BPL_NODE_PATH/$BLUE"
           backupBPLNode $pwd "$BPL_NODE_PATH/$GREEN"
@@ -213,4 +211,20 @@ function createLogFile ()
   LOG_FILE="$PWD/softwareUpdates.log"
 }
 
+function exitScript()
+{
+if [ "$1" -a "$2" ]
+  then
+        if [ $initValue == "TRUE" ]
+          then
+                cd $initPath
+                if [ -e $BPL_NODE_PATH ]
+                  then
+                        rm -rf $BPL_NODE_PATH
+                fi
+        fi
+     log "ERR" "Exiting from function $2  with exit code $1"
+     exit $1
+fi
+}
 init $1

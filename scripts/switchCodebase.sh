@@ -4,7 +4,7 @@ GREEN_DIR=./../../Green/BPL-node
 BLUE_DIR=./../../Blue/BPL-node
 BLUE=./../BPLNode/Blue/BPL-node
 DATE=`date '+%Y-%m-%d %H:%M:%S'`
-STATUS="$PWD/status.txt"
+#STATUS="$PWD/status.txt"
 ######################################
 # Function to write logs in log file #
 ######################################
@@ -78,11 +78,11 @@ function main()
 }
 
 
-status=`cat $STATUS`
-if [ $status == "TRUE" ]
-  then
-      log "INF" "calling main function of switchCodeBase. status code is $status"
-      main $1 $2 $3
-  else
-      log "ERR" "Failed to switch code base. Status code is $status "
-fi
+# status=`cat $STATUS`
+# if [ $status == "TRUE" ]
+#   then
+#       log "INF" "calling main function of switchCodeBase. status code is $status"
+main $1 $2 $3
+#   else
+#       log "ERR" "Failed to switch code base. Status code is $status "
+# fi
