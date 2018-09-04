@@ -6,7 +6,7 @@ BEGIN;
 
 /* Tables */
 CREATE TABLE IF NOT EXISTS "autoupdates"(
-  "transactionId" VARCHAR(64) NOT NULL,
+  "transactionId" VARCHAR(64) UNIQUE NOT NULL,
   "versionLabel" VARCHAR(100) NOT NULL,
   "triggerHeight" INT NOT NULL,
   "ipfsHash" VARCHAR(46) NOT NULL,

@@ -8,6 +8,7 @@ var schema = require('../schema/autoUpdates.js');
 var spawn = require('child_process').spawn;
 var version = require('../package.json').version;
 var shell = require('shelljs');
+var config = require('../'+process.env.CONFIG_NAME);
 
 // Private fields
 var modules, library, self, __private = {}, shared = {};
@@ -50,10 +51,9 @@ __private.attachApi = function () {
 
 
 __private.switchCodebase = function () {
-	//TODO port number to be required from config file
-	//TODO handle spawn callback
+	//TODO handle errors from switchCodebase
 	if (process.env.DOWNLOAD_STATUS === "success") {
-		spawn('bash',['scripts/switchCodebase.sh', process.env.CONFIG_NAME, process.env.GENESIS_NAME, 4001]);
+		spawn('bash',['scripts/switchCodebase.sh', process.env.CONFIG_NAME, process.env.GENESIS_NAME, config.port]);
 	}
 };
 

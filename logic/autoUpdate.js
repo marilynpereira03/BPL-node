@@ -93,9 +93,7 @@ AutoUpdate.prototype.verify = function (trs, sender, cb) {
 	if (!trs.asset.autoUpdate.versionLabel && !trs.asset.autoUpdate.versionLabel.length) {
 		return cb('Invalid version label asset.');
 	}
-	//TODO validate ipfsHash length and db datatype
-	//and unique hash
-	if (!trs.asset.autoUpdate.ipfsHash && !trs.asset.autoUpdate.ipfsHash.length) {
+	if (!trs.asset.autoUpdate.ipfsHash && trs.asset.autoUpdate.ipfsHash.length === 46) {
 		return cb('Invalid IPFS hash asset.');
 	}
 	if (!trs.asset.autoUpdate.triggerHeight) {
@@ -103,8 +101,8 @@ AutoUpdate.prototype.verify = function (trs, sender, cb) {
 	}
 	else {
 		var block = modules.blockchain.getLastBlock();
-		//TODO + 5760
-		if (trs.asset.autoUpdate.triggerHeight <= block.height /*+ 5760*/) {
+		//Autoupdate trigger needs to be minimum 5760(i.e blocks generated in 1 day) blocks ahead of current height
+		if (trs.asset.autoUpdate.triggerHeight <= (block.height + 5760)) {
 			return cb('Invalid trigger height asset.');
 		}
 	}
