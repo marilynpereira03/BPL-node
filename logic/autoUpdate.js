@@ -217,10 +217,12 @@ AutoUpdate.prototype.schema = {
 	id: 'Update',
 	type: 'object',
 	properties: {
+		transactionId: {
+			type: 'string'
+		},
 		triggerHeight: {
 			type: 'integer',
 		},
-		//TODO  verifyingTransactionId: null
 		versionLabel: {
 			type: 'string',
 		},
@@ -231,7 +233,7 @@ AutoUpdate.prototype.schema = {
 			type: 'boolean'
 		}
 	},
-	required: ['triggerHeight','versionLabel', 'ipfsHash', 'cancellationStatus']
+	required: ['transactionId','triggerHeight','versionLabel', 'ipfsHash', 'cancellationStatus']
 };
 
 //
@@ -239,14 +241,13 @@ AutoUpdate.prototype.schema = {
 
 //
 AutoUpdate.prototype.objectNormalize = function (trs) {
-	//TODO
-	// var report = library.schema.validate(trs.asset.autoUpdate, AutoUpdate.prototype.schema);
-	//
-	// if (!report) {
-	// 	throw 'Failed to validate autoupdate schema: ' + this.scope.schema.getLastErrors().map(function (err) {
-	// 		return err.message;
-	// 	}).join(', ');
-	// }
+	var report = library.schema.validate(trs.asset.autoUpdate, AutoUpdate.prototype.schema);
+
+	if (!report) {
+		throw 'Failed to validate autoupdate schema: ' + this.scope.schema.getLastErrors().map(function (err) {
+			return err.message;
+		}).join(', ');
+	}
 
 	return trs;
 };
@@ -295,7 +296,7 @@ AutoUpdate.prototype.dbSave = function (trs) {
 //
 AutoUpdate.prototype.afterSave = function (trs, cb) {
 	if(trs.asset.autoUpdate.verifyingTransactionId && !trs.asset.autoUpdate.cancellationStatus) {
-		//modules.autoupdates.downloadUpdate(trs.asset.autoUpdate.ipfsHash, function (err) {});
+		modules.autoupdates.downloadUpdate(trs.asset.autoUpdate.ipfsHash, function (err) {});
 	}
 	return cb();
 };
