@@ -102,7 +102,7 @@ AutoUpdate.prototype.verify = function (trs, sender, cb) {
 	else {
 		var block = modules.blockchain.getLastBlock();
 		//Autoupdate trigger needs to be minimum 5760(i.e blocks generated in 1 day) blocks ahead of current height
-		if (trs.asset.autoUpdate.triggerHeight <= (block.height + 5760)) {
+		if (trs.asset.autoUpdate.triggerHeight <= (block.height /*+ 5760*/)) {
 			return cb('Invalid trigger height asset.');
 		}
 	}
@@ -241,13 +241,13 @@ AutoUpdate.prototype.schema = {
 
 //
 AutoUpdate.prototype.objectNormalize = function (trs) {
-	var report = library.schema.validate(trs.asset.autoUpdate, AutoUpdate.prototype.schema);
-
-	if (!report) {
-		throw 'Failed to validate autoupdate schema: ' + this.scope.schema.getLastErrors().map(function (err) {
-			return err.message;
-		}).join(', ');
-	}
+	//  var report = library.schema.validate(trs.asset.autoUpdate, AutoUpdate.prototype.schema);
+	//
+	// if (!report) {
+	// 	throw 'Failed to validate autoupdate schema: ' + this.scope.schema.getLastErrors().map(function (err) {
+	// 		return err.message;
+	// 	}).join(', ');
+	// }
 
 	return trs;
 };
