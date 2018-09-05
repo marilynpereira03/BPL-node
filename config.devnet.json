@@ -9,9 +9,9 @@
   "db": {
     "host": "localhost",
     "port": 5432,
-    "database": "dbName",
-    "user": "dbuser",
-    "password": "password",
+    "database": "db_name",
+    "user": "db_user",
+    "password": "db_password",
     "poolSize": 20,
     "poolIdleTimeout": 30000,
     "reapIntervalMillis": 1000,
@@ -36,10 +36,6 @@
   "peers": {
     "minimumNetworkReach": 1,
     "list": [
-      {
-        "ip": "0.0.0.0",
-        "port": 4000
-      }
     ],
     "blackList": [],
     "options": {
@@ -56,7 +52,7 @@
   "forging": {
     "coldstart": 6,
     "force": true,
-    "secret": [],
+    "secret": [ ],
     "access": {
       "whiteList": [
         "127.0.0.1"
@@ -77,5 +73,6 @@
     }
   },
   "network": "BPL-devnet",
-  "nethash": "3640685da4447b369aa0a85958fd48ad7167661b4f3a890d7bde7a56590c1e6c"
+  "nethash": "0e47098c91065185038da4a33b78781ed3a75d19d8045fdc0e66499f1a3e72c6"
 }
+
