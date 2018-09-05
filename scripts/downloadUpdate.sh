@@ -70,7 +70,7 @@ function extractSoftwareCode ()
             if [ $getStatus == 0 ]
               then
                   log "INF" "Successfully extracted $FILE_NAME to directory: $PWD"
-                  log "INF" "Removing $FILE_NAME from directory: $PWD"
+                  log "INF" "Removing $FILE_NAME$FILE_EXTENSION from directory: $PWD"
                   rm -rf $FILE_NAME$FILE_EXTENSION
                   log "INF" "Successfully removed $FILE_NAME from directory: $PWD"
               else
