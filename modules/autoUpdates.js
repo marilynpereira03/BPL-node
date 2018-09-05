@@ -169,11 +169,27 @@ __private.isSoftwareUpToDate = function (cb) {
 			return cb('Couldn\'t find last applied auto update.');
 		}
 
-		if (version === rows[0].versionLabel) {
-			return cb(null, {status: true});
-		}
-		else {
+		var nodeVersion = version.split('.');
+		var updateVersion = rows[0].versionLabel.split('.');
+
+		if (parseInt(nodeVersion[0]) < parseInt(updateVersion[0])) {
 			return cb(null, {status: false, update: rows[0]});
+		}
+		else if (parseInt(nodeVersion[0]) === parseInt(updateVersion[0])) {
+			if (parseInt(nodeVersion[1]) < parseInt(updateVersion[1])) {
+				return cb(null, {status: false, update: rows[0]});
+			}
+			else if (parseInt(nodeVersion[1]) === parseInt(updateVersion[1])) {
+				if (parseInt(nodeVersion[2]) < parseInt(updateVersion[2])) {
+					return cb(null, {status: false, update: rows[0]});
+				}
+				else if (parseInt(nodeVersion[2]) === parseInt(updateVersion[2])) {
+					return cb(null, {status: true});
+				}
+				// else {
+				// 	return cb(null, {status: false, update: rows[0]});
+				// }
+			}
 		}
 	});
 };

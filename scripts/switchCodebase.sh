@@ -23,15 +23,15 @@ function copyData()
     config=$1
     genesis=$2
     port=$3
-    log "inf" "Copying the $config and $genesis files to directory $PWD" $4
+    log "inf" "Copying the $config and $genesis files from directory $PWD to $5" $4
     cp $config $5
     cp $genesis $5
-    log "inf" "Stopping the current running node process from directory $PWD" $4
+    log "inf" "Killing current node process from directory $PWD" $4
     kill -9 $(lsof -t -i:$port)
     sleep 2
     forever stop app.js
     sleep 2
-    log "inf" "Process killed from directory $PWD" $4
+    log "inf" "Process killed succesfully" $4
 
     cd $5
     log "inf" "Starting the node process in directory $PWD" $4
@@ -54,7 +54,7 @@ function main()
           then
               copyData $CONFIG $GENESIS $PORT $PWD $GREEN_DIR
           else
-              log "ERR" "Failed to switch code base to $GREEN_DIR. directory Green not found"
+              log "ERR" "Failed to switch code base to $GREEN_DIR, directory Green not found"
         fi
 
       elif [[ $PWD =~ 'Green' ]]
@@ -63,7 +63,7 @@ function main()
             then
                 copyData $CONFIG $GENESIS $PORT $PWD $BLUE_DIR
             else
-                log "ERR" "Failed to switch code base to $BLUE_DIR. directory Blue not found"
+                log "ERR" "Failed to switch code base to $BLUE_DIR, directory Blue not found"
           fi
 
       elif [[ $PWD =~ 'BPL-node' ]]
@@ -72,7 +72,7 @@ function main()
             then
                 copyData $CONFIG $GENESIS $PORT $PWD $BLUE
             else
-                log "ERR" "Failed to switch code base to $BLUE. directory Blue not found from directory $PWD"
+                log "ERR" "Failed to switch code base to $BLUE, directory Blue not found"
           fi
     fi
 }
