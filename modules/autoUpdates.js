@@ -163,7 +163,8 @@ AutoUpdates.prototype.checkAutoUpdate = function (height) {
 };
 
 __private.isSoftwareUpToDate = function (cb) {
-	library.db.query(sql.getLastAppliedAutoUpdate, {height: 9000}).then(function (rows) {
+	var block = modules.blockchain.getLastBlock();
+	library.db.query(sql.getLastAppliedAutoUpdate, {height: block.height}).then(function (rows) {
 		if (!rows.length) {
 			return cb('Couldn\'t find last applied auto update.');
 		}

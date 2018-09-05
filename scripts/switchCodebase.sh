@@ -77,12 +77,4 @@ function main()
     fi
 }
 
-
-# status=`cat $STATUS`
-# if [ $status == "TRUE" ]
-#   then
-#       log "INF" "calling main function of switchCodeBase. status code is $status"
 main $1 $2 $3
-#   else
-#       log "ERR" "Failed to switch code base. Status code is $status "
-# fi
