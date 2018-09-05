@@ -24,7 +24,7 @@ function init ()
       log "INF" "IPFS HASH: "$IPFS_HASH
       installSoftware
     else
-      log "ERR" "Invalid number of arguments passed to init()."
+      log "ERR" "Invalid number of arguments passed to init()"
   fi
 }
 
@@ -47,7 +47,7 @@ function downloadSoftware ()
 
   if curl --fail $IPFS_LINK$IPFS_HASH -o $FILE_NAME$FILE_EXTENSION
     then
-        log "INF" "Successfully downloaded BPL-node software."
+        log "INF" "Successfully downloaded BPL-node software"
     else
         log "ERR" "Failed to download BPL Software from IPFS"
         getStatus=$?
@@ -97,13 +97,13 @@ function installDependencies ()
               npm install libpq secp256k1
               npm install
               getStatus=$?
-              log "INF" "Successfully installed BPL-node software dependencies."
+              log "INF" "Successfully installed BPL-node software dependencies"
           else
               log "ERR" "Unable to install BPL-node software dependencies to directory: $PWD"
               exitScript $getStatus "installDependencies"
         fi
     else
-        log "ERR" "Invalid number of arguments passed to installDependencies()."
+        log "ERR" "Invalid number of arguments passed to installDependencies()"
   fi
 }
 
@@ -118,7 +118,7 @@ function backupBPLNode ()
         log "INF" "Taking backup of BPL-node software from $inputDir to $backupDir "
         cp -r $inputDir $backupDir
         getStatus=$?
-        log "INF" "Successfully taken backup of BPL-node software."
+        log "INF" "Successfully taken backup of BPL-node software"
     else
         log "ERR" "Unable to take backup of BPL-node software from $1 to $2 "
         exitScript $getStatus "backupBPLNode"
@@ -138,7 +138,7 @@ function backupBPLNode ()
                 log "ERR" "Unable to delete file $FILE_NAME from $1"
           fi
       else
-          log "ERR" "Invalid number of arguments to function cleanDirectory()."
+          log "ERR" "Invalid number of arguments to function cleanDirectory()"
     fi
  }
 
@@ -156,7 +156,7 @@ function installSoftware ()
         cd ./../../
         createLogFile
         cd $pwd
-        log  "INF" "$BLUE & $GREEN directories are present."
+        log  "INF" "$BLUE & $GREEN directories are present"
 
         if [[ "$PWD" =~ "$GREEN" ]]
           then
@@ -175,18 +175,18 @@ function installSoftware ()
           mkdir -p "$BPL_NODE_PATH"
           createLogFile
           cd $pwd
-          log "INF" "Creating $BLUE and $GREEN directories."
+          log "INF" "Creating $BLUE and $GREEN directories"
           mkdir -p "$BPL_NODE_PATH/$BLUE"
           mkdir -p "$BPL_NODE_PATH/$GREEN"
           initValue="TRUE"
-          log "INF" "Successfully created $BLUE and $GREEN directories."
+          log "INF" "Successfully created $BLUE and $GREEN directories"
           nextDir="$BPL_NODE_PATH/$BLUE"
           backupBPLNode $pwd "$BPL_NODE_PATH/$GREEN"
   fi
 
   if [ "$pwd" == "" -a "$nextDir" == "" ]
     then
-        log "ERR" "Values not found for pwd and nextDir in installSoftware()."
+        log "ERR" "Values not found for pwd and nextDir in installSoftware()"
     else
         cd $pwd
         cleanDirectory $nextDir
