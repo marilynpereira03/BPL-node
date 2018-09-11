@@ -4,15 +4,13 @@ GREEN_DIR=./../../Green/BPL-node
 BLUE_DIR=./../../Blue/BPL-node
 BLUE=./../BPLNode/Blue/BPL-node
 DATE=`date '+%Y-%m-%d %H:%M:%S'`
-#STATUS="$PWD/status.txt"
+
 ######################################
 # Function to write logs in log file #
 ######################################
 function log()
 {
-    MESSAGE=$2
-    LOG_FILE=./../../softwareUpdates.log
-    echo "[$1] $DATE | $MESSAGE "  >> $LOG_FILE
+    echo "[$1] $DATE | $2 "  >> $LOG_FILE
 }
 
 ##########################################
@@ -23,31 +21,30 @@ function copyData()
     config=$1
     genesis=$2
     port=$3
-    log "inf" "Copying the $config and $genesis files from directory $PWD to $5" $4
+    log "INF" "Copying the $config and $genesis files from directory $4 to $5"
     cp $config $5
     cp $genesis $5
-    log "inf" "Killing current node process from directory $PWD" $4
+    log "INF" "Killing current node process from directory $4"
+    forever stop app.js
     kill -9 $(lsof -t -i:$port)
     sleep 2
-    forever stop app.js
-    sleep 2
-    log "inf" "Process killed succesfully" $4
+    log "INF" "Process killed succesfully from $4"
 
     cd $5
-    log "inf" "Starting the node process in directory $PWD" $4
+    log "INF" "Starting the node process in directory $4"
     temp=$(forever start app.js -c $config -g $genesis)
-    cd $currentDir
 }
 
 
 function main()
 {
+    createLogFile
     CONFIG=$1
     GENESIS=$2
     PORT=$3
-    log "inf" "Config File : $CONFIG" $PWD
-    log "inf" "Genesis File: $2" $PWD
-    log "inf" "PORT: $PORT " $PWD
+    log "INF" "Config File : $CONFIG" $PWD
+    log "INF" "Genesis File: $2" $PWD
+    log "INF" "PORT: $PORT " $PWD
     if [[ $PWD =~ 'Blue' ]]
       then
         if [[ -d "$GREEN_DIR" ]]
@@ -75,6 +72,18 @@ function main()
                 log "ERR" "Failed to switch code base to $BLUE, directory Blue not found"
           fi
     fi
+}
+
+function createLogFile()
+{
+
+if [ -e ./../../../BPLNode ]
+  then
+      LOG_FILE=./../../softwareUpdates.log
+else
+      LOG_FILE=./../BPLNode/softwareUpdates.log
+fi
+
 }
 
 main $1 $2 $3

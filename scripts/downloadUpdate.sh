@@ -21,10 +21,11 @@ function init ()
   if [ "$1" ]
     then
       IPFS_HASH=$1
-      log "INF" "IPFS HASH: "$IPFS_HASH
+      log "INF" "IPFS HASH: $IPFS_HASH"
       installSoftware
     else
       log "ERR" "Invalid number of arguments passed to init()"
+      exitScript 1 "init Function"
   fi
 }
 
@@ -43,15 +44,14 @@ function downloadSoftware ()
   echo "DOWNLOAD DIR $downloadDir"
   log "INF" "Downloading BPL-node software from IPFS to directory: $PWD "
 
-  log "HASH $IPFS_LINK$IPFS_HASH : $FILE_NAME$FILE_EXTENSION "
+  log "INF" "HASH: $IPFS_LINK$IPFS_HASH FILE: $FILE_NAME$FILE_EXTENSION "
 
   if curl --fail $IPFS_LINK$IPFS_HASH -o $FILE_NAME$FILE_EXTENSION
     then
         log "INF" "Successfully downloaded BPL-node software"
     else
         log "ERR" "Failed to download BPL Software from IPFS"
-        getStatus=$?
-        exitScript $getStatus "downloadSoftware"
+        exitScript 1 "downloadSoftware"
   fi
 }
 
@@ -62,12 +62,12 @@ function extractSoftwareCode ()
   local inputDir=$1
   cd $inputDir
     then
-        if [ -e $FILE_NAME$FILE_EXTENSION ]
+        if [ -e "$FILE_NAME$FILE_EXTENSION" ]
           then
               log "INF" "Extracting $FILE_NAME to directory: $PWD"
               tar -xvzf $FILE_NAME$FILE_EXTENSION
               getStatus=$?
-            if [ $getStatus == 0 ]
+            if [ "$getStatus" == 0 ]
               then
                   log "INF" "Successfully extracted $FILE_NAME to directory: $PWD"
                   log "INF" "Removing $FILE_NAME$FILE_EXTENSION from directory: $PWD"
@@ -75,7 +75,7 @@ function extractSoftwareCode ()
                   log "INF" "Successfully removed $FILE_NAME from directory: $PWD"
               else
                   log "ERR" "Failed to extract $FILE_NAME$FILE_EXTENSION"
-                  exitScript $getStatus "extractSoftwareCode"
+                  exitScript 1 "extractSoftwareCode"
 
             fi
         fi
@@ -96,11 +96,10 @@ function installDependencies ()
               log "INF" "Installing BPL-node software dependencies to directory: $PWD"
               npm install libpq secp256k1
               npm install
-              getStatus=$?
               log "INF" "Successfully installed BPL-node software dependencies"
           else
               log "ERR" "Unable to install BPL-node software dependencies to directory: $PWD"
-              exitScript $getStatus "installDependencies"
+              exitScript 1 "installDependencies"
         fi
     else
         log "ERR" "Invalid number of arguments passed to installDependencies()"
@@ -117,11 +116,10 @@ function backupBPLNode ()
         cd $inputDir
         log "INF" "Taking backup of BPL-node software from $inputDir to $backupDir "
         cp -r $inputDir $backupDir
-        getStatus=$?
         log "INF" "Successfully taken backup of BPL-node software"
     else
         log "ERR" "Unable to take backup of BPL-node software from $1 to $2 "
-        exitScript $getStatus "backupBPLNode"
+        exitScript 1 "backupBPLNode"
   fi
 }
 
@@ -139,6 +137,7 @@ function backupBPLNode ()
           fi
       else
           log "ERR" "Invalid number of arguments to function cleanDirectory()"
+          exitScript 1 "cleanDirectory"
     fi
  }
 
