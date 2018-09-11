@@ -258,7 +258,7 @@ __private.forge = function (cb) {
 		//After node has completed syncing if it has missed any autoupdate while node was inactive
 		//then update is downloaded, while download is in progress restrict forging else node might fork
 		//forging will start once download is complete and code base switch takes place
-		if ((slots.getSlotNumber(currentBlockData.time) === slots.getSlotNumber()) && (new Date().getTime()-__private.coldstart > coldstart*1000) && !module.autoupdates.isSoftwareDownloadInProgress) {
+		if ((slots.getSlotNumber(currentBlockData.time) === slots.getSlotNumber()) && (new Date().getTime()-__private.coldstart > coldstart*1000) && !modules.autoupdates.isSoftwareDownloadInProgress()) {
 			modules.transactionPool.fillPool(constants.maxTxsPerBlock, function(err){
 				// Using PBFT observation: if a good quorum is at the same height with same blockid -> let's forge
 				// TODO: we should pre ask network quorum if i can send this forged block, sending node publicKey, a timestamp and a signature of the timestamp.
