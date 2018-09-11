@@ -295,7 +295,7 @@ AutoUpdate.prototype.dbSave = function (trs) {
 
 //
 AutoUpdate.prototype.afterSave = function (trs, cb) {
-	if(trs.asset.autoUpdate.verifyingTransactionId && !trs.asset.autoUpdate.cancellationStatus) {
+	if(!modules.loader.isloadingBlocksFromNetwork() && trs.asset.autoUpdate.verifyingTransactionId && !trs.asset.autoUpdate.cancellationStatus) {
 		modules.autoupdates.downloadUpdate(trs.asset.autoUpdate.ipfsHash, function (err) {});
 	}
 	return cb();

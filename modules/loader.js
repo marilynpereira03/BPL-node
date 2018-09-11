@@ -132,7 +132,6 @@ __private.loadUnconfirmedTransactions = function (cb) {
 };
 
 __private.loadBlockChain = function () {
-
 	var offset = 0, limit = Number(library.config.loading.loadPerIteration) || 1000;
 	var verify = Boolean(library.config.loading.verifyOnLoading);
 
@@ -336,7 +335,7 @@ __private.loadBlocksFromNetwork = function (cb) {
 	});
 
 
-
+	__private.loadingBlocksFromNetwork = true;
 	//TODO: tryCount is accounting for 2 use cases :
 	// - no more blocks downloaded
 	// - error finding common blocks
@@ -398,6 +397,7 @@ __private.loadBlocksFromNetwork = function (cb) {
 			});
 		},
 		function (err) {
+			__private.loadingBlocksFromNetwork = false;
 			if (err) {
 				library.logger.error('Failed to load blocks from network', err);
 				return cb(err);
@@ -702,6 +702,9 @@ Loader.prototype.syncing = function () {
 	return !!__private.syncFromNetworkIntervalId;
 };
 
+Loader.prototype.isloadingBlocksFromNetwork = function () {
+	return __private.loadingBlocksFromNetwork;
+};
 // #Events
 
 //
@@ -744,7 +747,6 @@ Loader.prototype.onAttachPublicApi = function () {
 
 //
 Loader.prototype.onDownloadBlocks = function (cb) {
-
 	__private.loadBlocksFromNetwork(cb);
 };
 

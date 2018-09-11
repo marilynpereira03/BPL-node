@@ -19,6 +19,8 @@ __private.assetTypes = {};
 function AutoUpdates (cb, scope) {
 	library = scope;
 	self = this;
+	__private.downloadSuccess = null;
+	__private.downloadInProgress = false;
 	__private.assetTypes[transactionTypes.AUTOUPDATE] = library.logic.transaction.attachAssetType(transactionTypes.AUTOUPDATE, new AutoUpdate());
 	return cb(null, self);
 }
@@ -52,7 +54,8 @@ __private.attachApi = function () {
 
 __private.switchCodebase = function () {
 	//TODO handle errors from switchCodebase
-	if (process.env.DOWNLOAD_STATUS === "success") {
+	if (__private.downloadSuccess) {
+		__private.downloadSuccess = false;
 		spawn('bash',['scripts/switchCodebase.sh', process.env.CONFIG_NAME, process.env.GENESIS_NAME, config.port]);
 	}
 };
@@ -198,7 +201,6 @@ __private.isSoftwareUpToDate = function (cb) {
 AutoUpdates.prototype.getMissedUpdate = function () {
 	__private.isSoftwareUpToDate(function (err, res) {
 		if (!err && !res.status) {
-			process.env.DOWNLOAD_IN_PROGRESS = true;
 			self.downloadUpdate(res.update.ipfsHash, function (err) {
 				if (!err) {
 					self.checkAutoUpdate(res.update.triggerHeight);
@@ -210,19 +212,25 @@ AutoUpdates.prototype.getMissedUpdate = function () {
 };
 
 AutoUpdates.prototype.downloadUpdate = function (hash, cb) {
+	__private.downloadInProgress = true;
 	shell.exec('./scripts/downloadUpdate.sh ' + hash,
 		function (code, stdout, stderr) {
+			__private.downloadInProgress = false;
 			if (code) {
-				process.env.DOWNLOAD_STATUS = "failure";
+				__private.downloadSuccess = false;
 				library.logger.error('Get update failed: ', stderr);
 				return cb('Get update failed: '+ stderr);
 			}
 			else {
-				process.env.DOWNLOAD_STATUS = "success";
+				__private.downloadSuccess = true;
 				library.logger.info('Get update was successful.');
 				return cb(null);
 			}
 		});
+};
+
+AutoUpdates.prototype.isSoftwareDownloadInProgress = function () {
+	return __private.downloadInProgress;
 };
 
 
