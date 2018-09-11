@@ -201,7 +201,9 @@ __private.isSoftwareUpToDate = function (cb) {
 AutoUpdates.prototype.getMissedUpdate = function () {
 	__private.isSoftwareUpToDate(function (err, res) {
 		if (!err && !res.status) {
+			__private.downloadInProgress = true;
 			self.downloadUpdate(res.update.ipfsHash, function (err) {
+				__private.downloadInProgress = false;
 				if (!err) {
 					self.checkAutoUpdate(res.update.triggerHeight);
 				}
@@ -212,10 +214,8 @@ AutoUpdates.prototype.getMissedUpdate = function () {
 };
 
 AutoUpdates.prototype.downloadUpdate = function (hash, cb) {
-	__private.downloadInProgress = true;
 	shell.exec('./scripts/downloadUpdate.sh ' + hash,
 		function (code, stdout, stderr) {
-			__private.downloadInProgress = false;
 			if (code) {
 				__private.downloadSuccess = false;
 				library.logger.error('Get update failed: ', stderr);
