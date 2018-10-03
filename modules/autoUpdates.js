@@ -53,10 +53,17 @@ __private.attachApi = function () {
 
 
 __private.switchCodebase = function () {
-	//TODO handle errors from switchCodebase
 	if (__private.downloadSuccess) {
 		__private.downloadSuccess = false;
-		spawn('bash',['scripts/switchCodebase.sh', process.env.CONFIG_NAME, process.env.GENESIS_NAME, config.port]);
+		var result = spawn('bash',['scripts/switchCodebase.sh', process.env.CONFIG_NAME, process.env.GENESIS_NAME, config.port]);
+		result.on('close', function(code) {
+			if (code) {
+				library.logger.error('Switch code base was successful');
+			}
+			else {
+				library.logger.error('Switch code base exited with exit code - ', code);
+			}
+		});
 	}
 };
 

@@ -12,7 +12,6 @@ function AutoUpdate () {}
 
 //Private methods
 __private.getDuplicate = function (data, cb) {
-	var query = '';
 	var where = [], params = {};
 
 	where.push('"versionLabel" = ${versionLabel}');
