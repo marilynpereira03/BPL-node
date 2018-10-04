@@ -155,15 +155,18 @@ shared.getPollResults = function (req, cb) {
 		if (err) {
 			return cb(err[0].message);
 		}
-
-		library.db.query(sql.getPollResultByAddress, { address: req.body.address }).then(function (rows) {
-			if (!rows.length) {
-				return cb("No vote transactions for poll address: " + req.body.address);
+		__private.getPollByAddress(req.body.address,function(error,result){
+			if(error){
+				return cb(error);
 			}
-			return cb(null, { results: rows });
-		}).catch(function (err) {
-			library.logger.error("stack", err);
-			return cb("Polls#getContract error");
+			else{
+				library.db.query(sql.getPollResultByAddress, { address: req.body.address }).then(function (rows) {
+					return cb(null, { results: rows });
+				}).catch(function (err) {
+					library.logger.error("stack", err);
+					return cb("Polls#getContract error");
+				});
+			}
 		});
 	});
 };
