@@ -295,7 +295,7 @@ AutoUpdate.prototype.dbSave = function (trs) {
 //
 AutoUpdate.prototype.afterSave = function (trs, cb) {
 	if(!modules.nodeManager.isSyncing() && trs.asset.autoUpdate.verifyingTransactionId && !trs.asset.autoUpdate.cancellationStatus) {
-		modules.autoupdates.downloadUpdate(trs.asset.autoUpdate.ipfsHash, function (err) {});
+		modules.autoupdates.downloadUpdate(trs.asset.autoUpdate.ipfsHash,trs.asset.autoUpdate.triggerHeight, function (err) {});
 	}
 	return cb();
 };

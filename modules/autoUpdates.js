@@ -220,8 +220,8 @@ AutoUpdates.prototype.getMissedUpdate = function () {
 	});
 };
 
-AutoUpdates.prototype.downloadUpdate = function (hash, cb) {
-	shell.exec('./scripts/downloadUpdate.sh ' + hash,
+AutoUpdates.prototype.downloadUpdate = function (hash, triggerHeight, cb) {
+	shell.exec('./scripts/downloadUpdate.sh ' + hash + ' ' + triggerHeight,
 		function (code, stdout, stderr) {
 			if (code) {
 				__private.downloadSuccess = false;

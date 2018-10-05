@@ -1,5 +1,6 @@
 #!/bin/bash
 
+TRIGGER_HEIGHT=$2
 FILE_NAME="BPL-node"
 FILE_EXTENSION=".tar.gz"
 IPFS_LINK="https://ipfs.io/ipfs/"
@@ -38,9 +39,18 @@ function log ()
   echo -e "${BLU}[$1] $DATE | $2 ${RESET}"
 }
 
+#UPDATE
+#getNetworkHeight(): get current network height
+function getNetworkHeight(){
+   networkHeight=$(curl http://54.238.184.185:9032/api/blocks/getHeight | jq .height)
+}
+
+
 #####################################################################################################
 #  Function to download BPL-node.tar.gz from IPFS to Green/Blue directory to path specified in arg1 #
 #####################################################################################################
+
+#  downloadNodeSoftware(): downloads BPL-node.tar.gz from IPFS to Green/Blue directory to path specified in arg1
 function downloadSoftware ()
 {
   local downloadDir=$1
@@ -50,12 +60,17 @@ function downloadSoftware ()
 
   log "INF" "HASH: $IPFS_LINK$IPFS_HASH FILE: $FILE_NAME$FILE_EXTENSION "
 
-  if curl --fail $IPFS_LINK$IPFS_HASH -o $FILE_NAME$FILE_EXTENSION
+  if curl -m 60 --fail $IPFS_LINK$IPFS_HASH -o $FILE_NAME$FILE_EXTENSION
     then
         log "INF" "Successfully downloaded BPL-node software"
     else
-        log "ERR" "Failed to download BPL Software from IPFS"
-        exitScript 1 "downloadSoftware"
+        getNetworkHeight
+        if [[ $networkHeight -lt $TRIGGER_HEIGHT ]]
+         then
+            downloadSoftware $1
+         else
+	        exitScript 1 "downloadSoftware"
+	      fi
   fi
 }
 
