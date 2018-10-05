@@ -7,9 +7,9 @@ IPFS_LINK="https://ipfs.io/ipfs/"
 BLUE="Blue"
 GREEN="Green"
 BPL_NODE='BPLNode'
-BPL_NODE_PATH="./../$BPL_NODE"
-BLUE_DIR_PATH="./../../$BLUE"
-GREEN_DIR_PATH="./../../$GREEN"
+BPL_NODE_PATH="$PWD/../$BPL_NODE"
+BLUE_DIR_PATH="$PWD/../../$BLUE"
+GREEN_DIR_PATH="$PWD/../../$GREEN"
 DATE=`date '+%Y-%m-%d %H:%M:%S'`
 
 BLU=`tput setaf 4`
@@ -29,14 +29,18 @@ function init ()
   fi
 }
 
-#  log(): writes logs to file softwareUpdates.log
+#######################################################
+# Functioin to write logs to file softwareUpdates.log #
+#######################################################
 function log ()
 {
   echo -e "[$1] $DATE | $2"  >> $LOG_FILE
   echo -e "${BLU}[$1] $DATE | $2 ${RESET}"
 }
 
-#  downloadNodeSoftware(): downloads BPL-node.tar.gz from IPFS to Green/Blue directory to path specified in arg1
+#####################################################################################################
+#  Function to download BPL-node.tar.gz from IPFS to Green/Blue directory to path specified in arg1 #
+#####################################################################################################
 function downloadSoftware ()
 {
   local downloadDir=$1
@@ -55,7 +59,9 @@ function downloadSoftware ()
   fi
 }
 
-#  extractSoftwareCode(): extracts software to path specified in arg1
+###########################################################
+# Function to extracts software to path specified in arg1 #
+###########################################################
 function extractSoftwareCode ()
 {
   if [ "$1" ]
@@ -82,7 +88,9 @@ function extractSoftwareCode ()
     fi
 }
 
-#  installDependencies(): installs dependencies to path specified in arg1
+###############################################################
+#  Function to install dependencies to path specified in arg1 #
+###############################################################
 function installDependencies ()
 {
   if [ "$1" ]
@@ -95,8 +103,20 @@ function installDependencies ()
               cd BPL-node
               log "INF" "Installing BPL-node software dependencies to directory: $PWD"
               npm install libpq secp256k1
-              npm install
-              log "INF" "Successfully installed BPL-node software dependencies"
+              getStatus=$?
+              if [ $getStatus ]
+                then
+                    npm install
+                    getStatus=$?
+                    if [ $getStatus ]
+                     then
+                          log "INF" "Successfully installed BPL-node software dependencies"
+                      else
+                          exitScript 1 "installDependencies"
+                    fi
+                else
+                    exitScript 1 "installDependencies"
+              fi
           else
               log "ERR" "Unable to install BPL-node software dependencies to directory: $PWD"
               exitScript 1 "installDependencies"
@@ -106,7 +126,9 @@ function installDependencies ()
   fi
 }
 
-#  backupBPLNode(): copies BPL-node from current directory(arg1) to backup directory(arg2)
+#####################################################################################
+#  Function to copy BPL-node from current directory(arg1) to backup directory(arg2) #
+#####################################################################################
 function backupBPLNode ()
 {
   if [ "$1" -a "$2" ]
@@ -123,7 +145,9 @@ function backupBPLNode ()
   fi
 }
 
-# cleanDirectory(): deletes BPL-node from path specified in arg1
+###########################################################
+# Function to remove BPL-node from path specified in arg1 #
+###########################################################
  function cleanDirectory ()
  {
     if [ $1 ]
@@ -141,9 +165,9 @@ function backupBPLNode ()
     fi
  }
 
-# installSoftware(): downloads the BPL-node software from IPFS
-#                    extracts BPL-node.tar.gz file
-#                    install dependencies
+####################################################################
+# Function to download and extract the BPL-node software from IPFS #
+####################################################################
 function installSoftware ()
 {
   local pwd=""
@@ -199,7 +223,9 @@ function installSoftware ()
   fi
 }
 
-# createLogFile(): creates log file
+###############################
+# Function to create log file #
+###############################
 function createLogFile ()
 {
   cd $BPL_NODE_PATH
@@ -210,6 +236,9 @@ function createLogFile ()
   LOG_FILE="$PWD/softwareUpdates.log"
 }
 
+###################################################
+# Function to exit from script with the exit code #
+###################################################
 function exitScript()
 {
 if [ "$1" -a "$2" ]
