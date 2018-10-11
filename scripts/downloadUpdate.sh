@@ -1,6 +1,8 @@
 #!/bin/bash
 
 TRIGGER_HEIGHT=$2
+NODE_IP=$3
+NODE_PORT=$4
 FILE_NAME="BPL-node"
 FILE_EXTENSION=".tar.gz"
 IPFS_LINK="https://ipfs.io/ipfs/"
@@ -42,7 +44,7 @@ function log ()
 #UPDATE
 #getNetworkHeight(): get current network height
 function getNetworkHeight(){
-   networkHeight=$(curl http://54.238.184.185:9032/api/blocks/getHeight | jq .height)
+   networkHeight=$(curl http://$NODE_IP:$NODE_PORT/api/blocks/getHeight | jq .height)
 }
 
 
