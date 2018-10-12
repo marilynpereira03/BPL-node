@@ -1,10 +1,9 @@
 #!/bin/bash
-
+PARENT_DIR=$PWD
 GREEN_DIR_PATH=$PWD/../../Green/BPL-node
 BLUE_DIR_PATH=$PWD/../../Blue/BPL-node
 FIRST_PATH=$PWD/../BPLNode/Blue/BPL-node
 DATE=`date '+%Y-%m-%d %H:%M:%S'`
-
 NEW_DIR_PATH=""
 CURRENT_DIR_PATH=""
 
@@ -38,7 +37,7 @@ function stopNode()
 # Function to start the node #
 ##############################
 function startNode()
-{
+{   
     cd $NEW_DIR_PATH
     log "INF" "Starting the node process in directory $NEW_DIR_PATH"
     temp=$(forever start app.js -c $CONFIG -g $GENESIS)
@@ -49,9 +48,7 @@ function startNode()
 ################################
 function copyConfig()
 {
-    log "INF" "************$PWD"
     log "INF" "Copying the $CONFIG file from directory $CURRENT_DIR_PATH to $NEW_DIR_PATH"
-
     node $PWD/scripts/copyConfig.js $NEW_DIR_PATH $CONFIG
 }
 
@@ -107,11 +104,11 @@ function main()
 ###############################
 function createLogFile()
 {
-if [ -e ./../../../BPLNode ]
+if [ -e $PARENT_DIR/../../../BPLNode ]
   then
-      LOG_FILE=./../../softwareUpdates.log
+      LOG_FILE=$PARENT_DIR/../../softwareUpdates.log
   else
-      LOG_FILE=./../BPLNode/softwareUpdates.log
+      LOG_FILE=$PARENT_DIR/../BPLNode/softwareUpdates.log
 fi
 }
 
