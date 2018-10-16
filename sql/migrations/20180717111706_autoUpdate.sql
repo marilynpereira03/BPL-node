@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS "autoupdates"(
   "ipfsHash" VARCHAR(46) NOT NULL,
   "verifyingTransactionId" VARCHAR(64) DEFAULT NULL,
   "cancellationStatus" BOOLEAN DEFAULT FALSE,
-  FOREIGN KEY("transactionId") REFERENCES "transactions"("id"),
+  FOREIGN KEY("transactionId") REFERENCES "transactions"("id") ON DELETE CASCADE,
   FOREIGN KEY("verifyingTransactionId") REFERENCES "transactions"("id") ON DELETE CASCADE
 );
 
