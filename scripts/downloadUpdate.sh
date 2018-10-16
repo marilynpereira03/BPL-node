@@ -37,8 +37,11 @@ function init ()
 #######################################################
 function log ()
 {
-  echo -e "[$1] $DATE | $2"  >> $LOG_FILE
-  echo -e "${BLU}[$1] $DATE | $2 ${RESET}"
+    if [[ $LOG_FILE != "" ]]
+     then
+        echo -e "[$1] $DATE | $2"  >> "$LOG_FILE"
+        echo -e "${BLU}[$1] $DATE | $2 ${RESET}"
+    fi
 }
 
 #UPDATE
@@ -260,7 +263,7 @@ function exitScript()
 {
 if [ "$1" -a "$2" ]
   then
-        if [ $initValue == "TRUE" ]
+        if [[ $initValue = "TRUE" ]]
           then
                 cd $initPath
                 if [ -e $BPL_NODE_PATH ]
