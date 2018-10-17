@@ -26,9 +26,10 @@ function log()
 function stopNode()
 {
     log "INF" "Killing current node process from directory $CURRENT_DIR_PATH"
-    forever stop app.js
-    kill -9 $(lsof -t -i:$PORT)
-    sleep 2
+    temp=$(forever stop app.js -c $CONFIG -g $GENESIS)
+    temp=$(forever stop app.js)
+    temp=$(forever stop app.js --config $CONFIG --genesis $GENESIS)
+    temp=$(kill -9 $(lsof -t -i:$PORT))
     log "INF" "Process killed succesfully from $CURRENT_DIR_PATH"
 
 }
