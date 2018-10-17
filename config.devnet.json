@@ -1,5 +1,5 @@
 {
-  "port": 4000,
+  "port": 9032,
   "address": "0.0.0.0",
   "version": "0.3.0",
   "fileLogLevel": "info",
@@ -9,9 +9,9 @@
   "db": {
     "host": "localhost",
     "port": 5432,
-    "database": "db_name",
-    "user": "db_user",
-    "password": "db_password",
+    "database": "bpl_devnet",
+    "user": "username",
+    "password": "password",
     "poolSize": 20,
     "poolIdleTimeout": 30000,
     "reapIntervalMillis": 1000,
@@ -36,6 +36,46 @@
   "peers": {
     "minimumNetworkReach": 1,
     "list": [
+      {
+        "ip": "18.179.13.146",
+        "port": 9032
+      },
+      {
+        "ip": "13.115.228.130",
+        "port": 9032
+      },
+      {
+        "ip": "13.230.96.141",
+        "port": 9032
+      },
+      {
+        "ip": "13.230.19.206",
+        "port": 9032
+      },
+      {
+        "ip": "13.115.67.154",
+        "port": 9032
+      },
+      {
+        "ip": "52.199.98.80",
+        "port": 9032
+      },
+      {
+        "ip": "13.115.226.7",
+        "port": 9032
+      },
+      {
+        "ip": "18.179.7.28",
+        "port": 9032
+      },
+      {
+        "ip": "13.115.71.160",
+        "port": 9032
+      },
+      {
+        "ip": "13.113.11.37",
+        "port": 9032
+      }
     ],
     "blackList": [],
     "options": {
@@ -73,6 +113,5 @@
     }
   },
   "network": "BPL-devnet",
-  "nethash": "0e47098c91065185038da4a33b78781ed3a75d19d8045fdc0e66499f1a3e72c6"
+  "nethash": "6a6db9731ed19ac0f511838fd773a7a32e07f90828a8aff15b9cc690fbc99986"
 }
-
