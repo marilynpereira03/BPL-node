@@ -804,7 +804,7 @@ shared.autoconfigure = function (req, cb) {
 		network: {
 			"nethash": library.config.nethash,
 			"token": network.client.token,
-			"tokenShortName": network.client.tokenShortName,
+			"ticker": network.client.ticker,
 			"symbol": network.client.symbol,
 			"explorer": network.client.explorer,
 			"version": network.pubKeyHash,

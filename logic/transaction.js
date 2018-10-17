@@ -303,7 +303,7 @@ Transaction.prototype.checkBalance = function (amount, balance, trs, sender) {
 	return {
 		exceeded: exceeded,
 		error: exceeded ? [
-			'Account does not have enough '+this.scope.config.network.client.tokenShortName+':', sender.address,
+			'Account does not have enough '+this.scope.config.network.client.ticker+':', sender.address,
 			'balance:', bignum(sender[balance].toString() || '0').div(Math.pow(10,8))
 		].join(' ') : null
 	};

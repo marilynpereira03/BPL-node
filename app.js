@@ -366,11 +366,11 @@ d.run(function () {
 			});
 
 			scope.network.server.listen(scope.config.port, scope.config.address, function (err) {
-				scope.logger.info('# '+scope.config.network.client.tokenShortName+' node server started on: ' + scope.config.address + ':' + scope.config.port);
+				scope.logger.info('# '+scope.config.network.client.ticker+' node server started on: ' + scope.config.address + ':' + scope.config.port);
 				if (!err) {
 					if (scope.config.ssl.enabled) {
 						scope.network.https.listen(scope.config.ssl.options.port, scope.config.ssl.options.address, function (err) {
-							scope.logger.info(scope.config.network.client.tokenShortName+' https started: ' + scope.config.ssl.options.address + ':' + scope.config.ssl.options.port);
+							scope.logger.info(scope.config.network.client.ticker+' https started: ' + scope.config.ssl.options.address + ':' + scope.config.ssl.options.port);
 
 							cb(err, scope.network);
 						});
