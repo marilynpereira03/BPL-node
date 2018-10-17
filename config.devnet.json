@@ -112,6 +112,6 @@
       "cert": "./ssl/bpl.crt"
     }
   },
-  "network": "BPL-testnet",
+  "network": "BPL-devnet",
   "nethash": "6a6db9731ed19ac0f511838fd773a7a32e07f90828a8aff15b9cc690fbc99986"
 }

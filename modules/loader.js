@@ -132,7 +132,6 @@ __private.loadUnconfirmedTransactions = function (cb) {
 };
 
 __private.loadBlockChain = function () {
-
 	var offset = 0, limit = Number(library.config.loading.loadPerIteration) || 1000;
 	var verify = Boolean(library.config.loading.verifyOnLoading);
 
@@ -334,7 +333,6 @@ __private.loadBlocksFromNetwork = function (cb) {
 			return p1.height<p2.height;
 		}
 	});
-
 
 
 	//TODO: tryCount is accounting for 2 use cases :
@@ -744,7 +742,6 @@ Loader.prototype.onAttachPublicApi = function () {
 
 //
 Loader.prototype.onDownloadBlocks = function (cb) {
-
 	__private.loadBlocksFromNetwork(cb);
 };
 

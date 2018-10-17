@@ -320,6 +320,9 @@ __private.promiseTransactions = function (t, block, blockPromises) {
 };
 
 __private.afterSave = function (block, cb) {
+	if (block.height > 1) {
+		modules.autoupdates.checkAutoUpdate(block.height);
+	}
 	async.eachSeries(block.transactions, function (transaction, cb) {
 		return library.logic.transaction.afterSave(transaction, cb);
 	}, function (err) {
