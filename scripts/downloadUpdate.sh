@@ -122,11 +122,13 @@ function installDependencies ()
           then
               cd BPL-node
               log "INF" "Installing BPL-node software dependencies to directory: $PWD"
-              npm install libpq secp256k1
+              installationLog=$(npm install libpq secp256k1)
+              log "INF" "$installationLog"
               getStatus=$?
               if [ $getStatus ]
                 then
-                    npm install
+                    installationLog=$(npm install)
+                    log "INF" "$installationLog"
                     getStatus=$?
                     if [ $getStatus ]
                      then
